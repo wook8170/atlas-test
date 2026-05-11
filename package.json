@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "description": "ATLAS Agent Orchestration sandbox",
+  "type": "module",
   "scripts": {
-    "build": "tsc",
-    "test": "echo 'no tests yet' && exit 0"
+    "build": "node --eval \"import('./src/index.ts')\"",
+    "test": "node --test"
   }
 }

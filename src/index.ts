@@ -1,2 +1,22 @@
-// atlas-test placeholder — 에이전트가 첫 작업으로 실 구조를 채움.
-export const placeholder = true;
+export {
+  ACTIVE_SESSION_KEY,
+  COMPLETED_OUTCOME,
+  MemoryStorage,
+  SCHEDULE_KEY,
+  STUDY_RECORDS_KEY,
+  StudyFlowApp,
+  StudyFlowError,
+  createDailyStudySnapshot,
+  createWeeklyScheduleEntry,
+  getCurrentOrNextScheduleEntry,
+  getEntriesForDate,
+  summarizeCompletedStudyRecords,
+} from "./studyFlow.ts";
+
+export type {
+  DailyStudySnapshot,
+  PomodoroSession,
+  StudyRecord,
+  StudyRecordSummary,
+  WeeklyScheduleEntry,
+} from "./studyFlow.ts";
