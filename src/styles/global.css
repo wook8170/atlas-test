@@ -1,0 +1,21 @@
+:root {
+  --color-bg: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-text: #0f121a;
+  --color-text-muted: #5a667e;
+  --color-border: #dde1e9;
+  --color-primary: #3566e2;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-system, sans-serif; background: var(--color-bg); color: var(--color-text); }
+
+.app-shell { display: flex; flex-direction: column; min-height: 100%; }
+.app-shell__header { padding: 16px; font-size: 18px; font-weight: 600; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.app-shell__main { flex: 1; padding: 16px; overflow-y: auto; }
+.app-shell__tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--color-border); background: var(--color-surface); padding-bottom: var(--safe-bottom); }
+.app-shell__tab { padding: 12px; text-align: center; color: var(--color-text-muted); text-decoration: none; font-size: 14px; }
+.app-shell__tab.active { color: var(--color-primary); font-weight: 600; }
+
+.route h1 { font-size: 20px; margin: 0 0 12px; }
+.route p { color: var(--color-text-muted); font-size: 14px; }
