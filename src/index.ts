@@ -1,2 +1,28 @@
-// atlas-test placeholder — 에이전트가 첫 작업으로 실 구조를 채움.
-export const placeholder = true;
+export {
+  DEFAULT_TIME_STEP_MINUTES,
+  MAX_SUBJECT_NAME_LENGTH,
+  MIN_DURATION_MINUTES,
+  MIN_SUBJECT_NAME_LENGTH,
+  WEEKDAY_MAX,
+  WEEKDAY_MIN,
+  WEEKLY_SCHEDULE_SCHEMA_VERSION,
+  WeeklyScheduleValidationError,
+  assertValidWeeklySchedule,
+  compareEntriesByTime,
+  createEmptyWeeklySchedule,
+  entriesOverlap,
+  getCurrentOrNextEntry,
+  getEntriesForWeekday,
+  timeStringToMinutes,
+  validateNoOverlap,
+  validateWeeklySchedule,
+  validateWeeklyScheduleEntry,
+} from "./schedule";
+
+export type {
+  CurrentOrNextEntryResult,
+  Weekday,
+  WeeklySchedule,
+  WeeklyScheduleEntry,
+  WeeklyScheduleRepository,
+} from "./schedule";
