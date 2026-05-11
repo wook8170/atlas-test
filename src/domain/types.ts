@@ -18,10 +18,13 @@ export interface StudentProfile {
 export interface WeeklyScheduleEntry {
   id: string;
   weekday: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  order: number;
   startMinute: number;
   endMinute: number;
   subject: string;
   color: string;
+  createdAt: string;
+  updatedAt: string;
   schemaVersion: 1;
 }
 
