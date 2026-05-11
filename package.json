@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "description": "ATLAS Agent Orchestration sandbox",
+  "type": "commonjs",
   "scripts": {
-    "build": "tsc",
-    "test": "echo 'no tests yet' && exit 0"
+    "build": "node --check src/index.js src/pomodoro.js",
+    "test": "node --test"
   }
 }
