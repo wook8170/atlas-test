@@ -5,6 +5,6 @@
   "description": "ATLAS Agent Orchestration sandbox",
   "scripts": {
     "build": "tsc",
-    "test": "echo 'no tests yet' && exit 0"
+    "test": "node --test src/*.test.ts"
   }
 }
