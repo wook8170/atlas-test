@@ -5,6 +5,9 @@ export const SessionRepository = {
   async append(session: PomodoroSession): Promise<void> {
     await db.sessions.put(session);
   },
+  async listAll(): Promise<PomodoroSession[]> {
+    return db.sessions.orderBy("startedAt").reverse().toArray();
+  },
   async listByDate(date: string): Promise<PomodoroSession[]> {
     return db.sessions.where("startedAt").startsWith(date).toArray();
   },
