@@ -1,4 +1,5 @@
 import { db } from "@/db/dexie";
+import { buildTodaySummary } from "@/domain/sessionUtils";
 import type { PomodoroSession, TodaySummary } from "@/domain/types";
 
 export const SessionRepository = {
@@ -10,17 +11,6 @@ export const SessionRepository = {
   },
   async todaySummary(date: string): Promise<TodaySummary> {
     const sessions = await this.listByDate(date);
-    const completed = sessions.filter((s) => s.status === "completed");
-    const bySubject = new Map<string, number>();
-    completed.forEach((s) => {
-      const k = s.scheduleEntryId ?? "자유";
-      bySubject.set(k, (bySubject.get(k) ?? 0) + 1);
-    });
-    return {
-      date,
-      completedSessions: completed.length,
-      totalFocusMinutes: completed.reduce((sum, s) => sum + s.durationSec, 0) / 60,
-      bySubject: [...bySubject.entries()].map(([subject, count]) => ({ subject, count })),
-    };
+    return buildTodaySummary(date, sessions);
   },
 };
