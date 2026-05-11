@@ -1,0 +1,10 @@
+{
+  "name": "atlas-test",
+  "version": "0.0.1",
+  "private": true,
+  "description": "ATLAS Agent Orchestration sandbox",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo 'no tests yet' && exit 0"
+  }
+}
