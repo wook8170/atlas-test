@@ -28,20 +28,29 @@ export interface WeeklyScheduleEntry {
 export interface PomodoroSettings {
   id: "default";
   focusMinutes: number;
-  breakMinutes: number;
+  shortBreakMinutes: number;
   longBreakMinutes: number;
   longBreakEvery: number;
-  schemaVersion: 1;
+  updatedAt: string;
+  schemaVersion: 2;
 }
+
+export type SessionType = "focus" | "short-break" | "long-break";
+export type CompletionReason = "finished" | "user_stopped" | "abandoned" | null;
 
 export interface PomodoroSession {
   id: string;
-  scheduleEntryId?: string;
+  scheduleEntryId: string | null;
+  freeTaskTitle: string | null;
+  sessionType: SessionType;
   startedAt: string;
-  endedAt?: string;
-  durationSec: number;
-  status: "completed" | "interrupted" | "cancelled";
-  schemaVersion: 1;
+  endedAt: string;
+  elapsedSeconds: number;
+  completed: boolean;
+  completionReason: CompletionReason;
+  localDateKey: string;
+  createdAt: string;
+  schemaVersion: 2;
 }
 
 export interface ErrorLog {

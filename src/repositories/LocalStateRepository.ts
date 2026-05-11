@@ -5,11 +5,31 @@ import type { PomodoroSettings, StudentProfile } from "@/domain/types";
 const DEFAULT_SETTINGS: PomodoroSettings = {
   id: "default",
   focusMinutes: 25,
-  breakMinutes: 5,
+  shortBreakMinutes: 5,
   longBreakMinutes: 15,
   longBreakEvery: 4,
-  schemaVersion: 1,
+  updatedAt: new Date().toISOString(),
+  schemaVersion: 2,
 };
+
+function normalizeSettings(
+  settings?: Partial<PomodoroSettings> & { breakMinutes?: number },
+): PomodoroSettings {
+  if (!settings) {
+    return DEFAULT_SETTINGS;
+  }
+
+  return {
+    id: "default",
+    focusMinutes: settings.focusMinutes ?? DEFAULT_SETTINGS.focusMinutes,
+    shortBreakMinutes:
+      settings.shortBreakMinutes ?? settings.breakMinutes ?? DEFAULT_SETTINGS.shortBreakMinutes,
+    longBreakMinutes: settings.longBreakMinutes ?? DEFAULT_SETTINGS.longBreakMinutes,
+    longBreakEvery: settings.longBreakEvery ?? DEFAULT_SETTINGS.longBreakEvery,
+    updatedAt: settings.updatedAt ?? DEFAULT_SETTINGS.updatedAt,
+    schemaVersion: 2,
+  };
+}
 
 export const LocalStateRepository = {
   async getProfile(): Promise<StudentProfile | undefined> {
@@ -19,10 +39,21 @@ export const LocalStateRepository = {
     await db.profile.put(profile);
   },
   async getSettings(): Promise<PomodoroSettings> {
-    return (await db.settings.get("default")) ?? DEFAULT_SETTINGS;
+    return normalizeSettings(
+      (await db.settings.get("default")) as
+        | (Partial<PomodoroSettings> & { breakMinutes?: number })
+        | undefined,
+    );
   },
   async updateSettings(patch: Partial<PomodoroSettings>): Promise<void> {
     const cur = await this.getSettings();
-    await db.settings.put({ ...cur, ...patch, id: "default" });
+    await db.settings.put(
+      normalizeSettings({
+        ...cur,
+        ...patch,
+        id: "default",
+        updatedAt: new Date().toISOString(),
+      }),
+    );
   },
 };
