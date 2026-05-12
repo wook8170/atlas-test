@@ -3,13 +3,14 @@ import type { WeeklyScheduleEntry } from "@/domain/types";
 
 export const ScheduleRepository = {
   async listByWeekday(weekday: number): Promise<WeeklyScheduleEntry[]> {
-    const entries = await db.schedule.where("weekday").equals(weekday).toArray();
-    return entries
-      .filter((entry) => entry.isActive)
-      .sort((left, right) => left.order - right.order || left.startMinute - right.startMinute);
+    const entries = await db.schedule.where("weekday").equals(weekday).sortBy("startMinute");
+    return entries.filter((entry) => entry.isActive !== false);
   },
   async listAll(): Promise<WeeklyScheduleEntry[]> {
     return db.schedule.toArray();
+  },
+  async getById(id: string): Promise<WeeklyScheduleEntry | undefined> {
+    return db.schedule.get(id);
   },
   async upsert(entry: WeeklyScheduleEntry): Promise<void> {
     await db.schedule.put(entry);

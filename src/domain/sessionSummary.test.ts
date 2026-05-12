@@ -1,25 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { buildTodaySummary, getLocalDateKey, resolveSessionLabel } from "./sessionSummary";
-import type { PomodoroSession, WeeklyScheduleEntry } from "./types";
+import type { SessionRecord, WeeklyScheduleEntry } from "./types";
 
 const scheduleEntries: WeeklyScheduleEntry[] = [
   {
     id: "schedule-1",
     weekday: 1,
-    order: 1,
-    title: "수학",
     startMinute: 540,
     endMinute: 590,
+    subjectName: "수학",
+    subjectColor: "#3566e2",
     isActive: true,
     createdAt: "2026-05-11T00:00:00.000Z",
     updatedAt: "2026-05-11T00:00:00.000Z",
-    schemaVersion: 2,
+    schemaVersion: 1,
   },
 ];
 
 describe("sessionSummary", () => {
   it("keeps free task names in today's summary and counts interruptions separately", () => {
-    const sessions: PomodoroSession[] = [
+    const sessions: SessionRecord[] = [
       {
         id: "session-1",
         scheduleEntryId: null,
@@ -53,14 +53,13 @@ describe("sessionSummary", () => {
     expect(buildTodaySummary("2026-05-11", sessions, scheduleEntries)).toEqual({
       date: "2026-05-11",
       completedSessions: 1,
-      interruptedSessions: 1,
       totalFocusMinutes: 35,
       bySubject: [{ subject: "독서", count: 2 }],
     });
   });
 
   it("resolves schedule-based session labels and local date keys", () => {
-    const session: PomodoroSession = {
+    const session: SessionRecord = {
       id: "session-3",
       scheduleEntryId: "schedule-1",
       freeTaskTitle: null,

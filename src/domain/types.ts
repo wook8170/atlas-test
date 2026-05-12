@@ -18,43 +18,49 @@ export interface StudentProfile {
 export interface WeeklyScheduleEntry {
   id: string;
   weekday: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  order: number;
-  title: string;
   startMinute: number;
   endMinute: number;
+  subjectName: string;
+  subjectColor: string;
+  focusDurationMin?: number;
+  breakDurationMin?: number;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  schemaVersion: 2;
-  displayColor?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  schemaVersion: 1;
 }
 
 export interface PomodoroSettings {
   id: "default";
   focusMinutes: number;
-  shortBreakMinutes: number;
+  breakMinutes: number;
   longBreakMinutes: number;
   longBreakEvery: number;
-  updatedAt: string;
+  updatedAt?: string;
   schemaVersion: 1;
 }
 
 export type SessionType = "focus" | "short-break" | "long-break";
-export type CompletionReason = "finished" | "user_stopped" | "abandoned";
 
-export interface PomodoroSession {
+export type CompletionReason =
+  | "finished"
+  | "user_stopped"
+  | "abandoned"
+  | null;
+
+export interface SessionRecord {
   id: string;
   scheduleEntryId: string | null;
   freeTaskTitle: string | null;
   sessionType: SessionType;
   startedAt: string;
   endedAt: string;
-  elapsedSeconds: number;
   completed: boolean;
-  completionReason: CompletionReason | null;
   localDateKey: string;
   createdAt: string;
   schemaVersion: 1;
+  elapsedSeconds?: number;
+  completionReason?: CompletionReason;
 }
 
 export interface ErrorLog {
@@ -69,7 +75,6 @@ export interface ErrorLog {
 export interface TodaySummary {
   date: string;
   completedSessions: number;
-  interruptedSessions: number;
   totalFocusMinutes: number;
   bySubject: Array<{ subject: string; count: number }>;
 }

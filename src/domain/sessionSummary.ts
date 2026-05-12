@@ -1,5 +1,5 @@
 import type {
-  PomodoroSession,
+  SessionRecord,
   TodaySummary,
   WeeklyScheduleEntry,
 } from "@/domain/types";
@@ -18,7 +18,7 @@ export function getLocalDateKey(input: Date | string): string {
 }
 
 export function resolveSessionLabel(
-  session: PomodoroSession,
+  session: SessionRecord,
   scheduleTitleMap: ReadonlyMap<string, string> = new Map(),
 ): string {
   if (session.freeTaskTitle) {
@@ -38,15 +38,14 @@ export function resolveSessionLabel(
 
 export function buildTodaySummary(
   date: string,
-  sessions: PomodoroSession[],
+  sessions: SessionRecord[],
   scheduleEntries: WeeklyScheduleEntry[],
 ): TodaySummary {
   const scheduleTitleMap = new Map(
-    scheduleEntries.map((entry) => [entry.id, entry.title] as const),
+    scheduleEntries.map((entry) => [entry.id, entry.subjectName] as const),
   );
   const bySubject = new Map<string, number>();
   let completedSessions = 0;
-  let interruptedSessions = 0;
   let totalFocusSeconds = 0;
 
   sessions.forEach((session) => {
@@ -54,12 +53,10 @@ export function buildTodaySummary(
       return;
     }
 
-    totalFocusSeconds += session.elapsedSeconds;
+    totalFocusSeconds += session.elapsedSeconds ?? 0;
 
     if (session.completed) {
       completedSessions += 1;
-    } else {
-      interruptedSessions += 1;
     }
 
     const label = resolveSessionLabel(session, scheduleTitleMap);
@@ -69,7 +66,6 @@ export function buildTodaySummary(
   return {
     date,
     completedSessions,
-    interruptedSessions,
     totalFocusMinutes: Number((totalFocusSeconds / 60).toFixed(1)),
     bySubject: [...bySubject.entries()]
       .map(([subject, count]) => ({ subject, count }))
