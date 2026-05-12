@@ -52,7 +52,8 @@ describe("timer helpers", () => {
       new Date("2026-05-11T10:15:00.000Z"),
     );
 
-    expect(session.durationSec).toBe(900);
-    expect(session.status).toBe("completed");
+    expect(session.elapsedSeconds).toBe(900);
+    expect(session.completed).toBe(true);
+    expect(session.freeTaskTitle).toBe("자율 집중");
   });
 });

@@ -1,9 +1,9 @@
-import type { PomodoroSession } from "@/domain/types";
+import type { CompletionReason, SessionRecord } from "@/domain/types";
 
 type TimerSnapshotBase = {
   id: string;
   label: string;
-  scheduleEntryId?: string;
+  scheduleEntryId?: string | null;
   startedAt: string;
   totalSec: number;
 };
@@ -21,7 +21,7 @@ export type TimerSnapshot =
 export function createTimerSnapshot(input: {
   id: string;
   label: string;
-  scheduleEntryId?: string;
+  scheduleEntryId?: string | null;
   totalSec: number;
   now?: Date;
 }): TimerSnapshot {
@@ -82,18 +82,29 @@ export function isExpired(snapshot: TimerSnapshot, now = new Date()): boolean {
 
 export function snapshotToSession(
   snapshot: TimerSnapshot,
-  status: PomodoroSession["status"],
+  status: "completed" | "interrupted" | "cancelled",
   endedAt = new Date(),
-): PomodoroSession {
+): SessionRecord {
+  const completed = status === "completed";
+  const completionReason: CompletionReason = completed
+    ? "finished"
+    : status === "interrupted"
+      ? "user_stopped"
+      : "abandoned";
+  const elapsedSeconds = completed ? snapshot.totalSec : getElapsedSec(snapshot, endedAt);
+
   return {
     id: snapshot.id,
-    scheduleEntryId: snapshot.scheduleEntryId,
+    scheduleEntryId: snapshot.scheduleEntryId ?? null,
+    freeTaskTitle: snapshot.scheduleEntryId ? null : snapshot.label,
+    sessionType: "focus",
     startedAt: snapshot.startedAt,
     endedAt: endedAt.toISOString(),
-    durationSec: status === "completed"
-      ? snapshot.totalSec
-      : getElapsedSec(snapshot, endedAt),
-    status,
+    completed,
+    localDateKey: snapshot.startedAt.slice(0, 10),
+    createdAt: endedAt.toISOString(),
+    elapsedSeconds,
+    completionReason,
     schemaVersion: 1,
   };
 }
