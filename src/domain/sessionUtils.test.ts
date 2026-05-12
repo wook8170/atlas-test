@@ -1,16 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { buildTodaySummary, isCompletedFocusSession, sortSessionsNewestFirst } from "./sessionUtils";
-import type { PomodoroSession } from "./types";
+import type { SessionRecord } from "./types";
 
-function createSession(overrides: Partial<PomodoroSession>): PomodoroSession {
+function createSession(overrides: Partial<SessionRecord>): SessionRecord {
   return {
     id: "session-1",
+    scheduleEntryId: null,
+    freeTaskTitle: "수학",
     sessionType: "focus",
-    label: "수학",
     startedAt: "2026-05-11T09:00",
     endedAt: "2026-05-11T09:25",
-    durationSec: 1500,
-    status: "completed",
+    completed: true,
+    localDateKey: "2026-05-11",
+    createdAt: "2026-05-11T09:25",
+    elapsedSeconds: 1500,
+    completionReason: "finished",
     schemaVersion: 1,
     ...overrides,
   };
@@ -19,20 +23,20 @@ function createSession(overrides: Partial<PomodoroSession>): PomodoroSession {
 describe("sessionUtils", () => {
   it("counts only completed focus sessions in today summary", () => {
     const summary = buildTodaySummary("2026-05-11", [
-      createSession({ id: "1", label: "수학" }),
-      createSession({ id: "2", label: "영어", status: "interrupted" }),
-      createSession({ id: "3", label: "휴식", sessionType: "short-break" }),
-      createSession({ id: "4", label: "수학", durationSec: 1800 }),
+      createSession({ id: "1", freeTaskTitle: "수학" }),
+      createSession({ id: "2", freeTaskTitle: "영어", completed: false, completionReason: "user_stopped" }),
+      createSession({ id: "3", freeTaskTitle: null, sessionType: "short-break", completed: true }),
+      createSession({ id: "4", freeTaskTitle: "수학", elapsedSeconds: 1800 }),
     ]);
 
     expect(summary.completedSessions).toBe(2);
     expect(summary.totalFocusMinutes).toBe(55);
-    expect(summary.byLabel).toEqual([{ label: "수학", count: 2 }]);
+    expect(summary.bySubject).toEqual([{ subject: "수학", count: 2 }]);
   });
 
   it("detects completed focus sessions for quick filtering", () => {
-    expect(isCompletedFocusSession(createSession({ status: "completed" }))).toBe(true);
-    expect(isCompletedFocusSession(createSession({ status: "cancelled" }))).toBe(false);
+    expect(isCompletedFocusSession(createSession({ completed: true }))).toBe(true);
+    expect(isCompletedFocusSession(createSession({ completed: false }))).toBe(false);
     expect(isCompletedFocusSession(createSession({ sessionType: "long-break" }))).toBe(false);
   });
 

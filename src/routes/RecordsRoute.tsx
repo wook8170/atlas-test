@@ -1,23 +1,41 @@
 import { FormEvent, useEffect, useState } from "react";
 import {
   createEmptyTodaySummary,
+  sessionElapsedSeconds,
+  sessionSubjectLabel,
   sortSessionsNewestFirst,
 } from "@/domain/sessionUtils";
-import type { PomodoroSession, PomodoroSessionStatus, TodaySummary } from "@/domain/types";
+import type { CompletionReason, SessionRecord, TodaySummary } from "@/domain/types";
 import { SessionRepository } from "@/repositories";
+
+type SessionFormStatus = "completed" | "interrupted" | "cancelled";
 
 type SessionFormState = {
   label: string;
   startedAt: string;
   endedAt: string;
-  status: PomodoroSessionStatus;
+  status: SessionFormStatus;
 };
 
-const STATUS_LABELS: Record<PomodoroSessionStatus, string> = {
+const STATUS_LABELS: Record<SessionFormStatus, string> = {
   completed: "완료",
   interrupted: "중단",
   cancelled: "취소",
 };
+
+function toCompletionReason(status: SessionFormStatus): CompletionReason {
+  if (status === "completed") {
+    return "finished";
+  }
+  return status === "interrupted" ? "user_stopped" : "abandoned";
+}
+
+function toSessionFormStatus(session: SessionRecord): SessionFormStatus {
+  if (session.completed) {
+    return "completed";
+  }
+  return session.completionReason === "abandoned" ? "cancelled" : "interrupted";
+}
 
 function todayKey(date = new Date()): string {
   const year = date.getFullYear();
@@ -64,12 +82,12 @@ function formatClock(value: string | undefined): string {
   return time.slice(0, 5);
 }
 
-function formatDuration(durationSec: number): string {
-  return `${Math.round(durationSec / 60)}분`;
+function formatDuration(session: SessionRecord): string {
+  return `${Math.round(sessionElapsedSeconds(session) / 60)}분`;
 }
 
 export function RecordsRoute() {
-  const [sessions, setSessions] = useState<PomodoroSession[]>([]);
+  const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [summary, setSummary] = useState<TodaySummary>(() => createEmptyTodaySummary(todayKey()));
   const [form, setForm] = useState<SessionFormState>(() => createDefaultForm());
   const [error, setError] = useState<string | null>(null);
@@ -120,12 +138,16 @@ export function RecordsRoute() {
     try {
       await SessionRepository.append({
         id: crypto.randomUUID(),
+        scheduleEntryId: null,
+        freeTaskTitle: label,
         sessionType: "focus",
-        label,
         startedAt: form.startedAt,
         endedAt: form.endedAt,
-        durationSec: Math.round((endedAt.getTime() - startedAt.getTime()) / 1000),
-        status: form.status,
+        completed: form.status === "completed",
+        localDateKey: todayKey(startedAt),
+        createdAt: new Date().toISOString(),
+        elapsedSeconds: Math.round((endedAt.getTime() - startedAt.getTime()) / 1000),
+        completionReason: toCompletionReason(form.status),
         schemaVersion: 1,
       });
       await loadData();
@@ -206,7 +228,7 @@ export function RecordsRoute() {
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
-                  status: event.target.value as PomodoroSessionStatus,
+                  status: event.target.value as SessionFormStatus,
                 }))
               }
             >
@@ -234,11 +256,11 @@ export function RecordsRoute() {
           </div>
         </div>
 
-        {summary.byLabel.length > 0 ? (
+        {summary.bySubject.length > 0 ? (
           <div className="tag-row">
-            {summary.byLabel.map((item) => (
-              <span className="tag-chip" key={item.label}>
-                {item.label} {item.count}회
+            {summary.bySubject.map((item) => (
+              <span className="tag-chip" key={item.subject}>
+                {item.subject} {item.count}회
               </span>
             ))}
           </div>
@@ -249,14 +271,14 @@ export function RecordsRoute() {
             {sessions.map((session) => (
               <li className="session-list__item" key={session.id}>
                 <div>
-                  <strong>{session.label}</strong>
+                  <strong>{sessionSubjectLabel(session)}</strong>
                   <p>
                     {formatClock(session.startedAt)} - {formatClock(session.endedAt)} ·{" "}
-                    {formatDuration(session.durationSec)}
+                    {formatDuration(session)}
                   </p>
                 </div>
-                <span className={`status-pill status-pill--${session.status}`}>
-                  {STATUS_LABELS[session.status]}
+                <span className={`status-pill status-pill--${toSessionFormStatus(session)}`}>
+                  {STATUS_LABELS[toSessionFormStatus(session)]}
                 </span>
               </li>
             ))}
