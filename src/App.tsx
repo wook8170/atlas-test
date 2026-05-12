@@ -1,14 +1,14 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { MobileAppShell } from "./components/MobileAppShell";
-import { StudyTimerProvider } from "./context/StudyTimerContext";
 import { HomeRoute } from "./routes/HomeRoute";
 import { TimetableRoute } from "./routes/TimetableRoute";
 import { RecordsRoute } from "./routes/RecordsRoute";
 import { SettingsRoute } from "./routes/SettingsRoute";
+import { OfflineAppProvider } from "./state/OfflineAppContext";
 
 export function App() {
   return (
-    <StudyTimerProvider>
+    <OfflineAppProvider>
       <MobileAppShell>
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
@@ -18,6 +18,6 @@ export function App() {
           <Route path="/settings" element={<SettingsRoute />} />
         </Routes>
       </MobileAppShell>
-    </StudyTimerProvider>
+    </OfflineAppProvider>
   );
 }
