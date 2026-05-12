@@ -108,7 +108,7 @@ async function buildScheduleSubjectMap(
   const byId = new Map<string, string>();
   entries.forEach((entry) => {
     if (entry) {
-      byId.set(entry.id, entry.subject);
+      byId.set(entry.id, entry.subjectName);
     }
   });
   return byId;

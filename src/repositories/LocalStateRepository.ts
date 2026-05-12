@@ -12,6 +12,8 @@ const DEFAULT_SETTINGS: PomodoroSettings = {
   schemaVersion: 1,
 };
 
+export { DEFAULT_SETTINGS };
+
 export const LocalStateRepository = {
   async getProfile(): Promise<StudentProfile | undefined> {
     return db.profile.get("self");

@@ -69,7 +69,7 @@ export function TimetableRoute() {
         const completedCountByEntryId = new Map<string, number>();
 
         sessions.forEach((session) => {
-          if (session.status !== "completed" || !session.scheduleEntryId) {
+          if (!session.completed || session.sessionType !== "focus" || !session.scheduleEntryId) {
             return;
           }
 
