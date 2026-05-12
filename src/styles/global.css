@@ -259,6 +259,27 @@ select {
   gap: 12px;
 }
 
+.home-timer__field {
+  display: grid;
+  gap: 8px;
+}
+
+.home-timer__field span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.home-timer__field input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 12px;
+  background: #ffffff;
+  color: var(--color-text);
+}
+
 .home-timer__button {
   width: 100%;
   min-height: 56px;

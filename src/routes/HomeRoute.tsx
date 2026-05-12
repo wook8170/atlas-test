@@ -59,6 +59,8 @@ export function HomeRoute() {
   const [summary, setSummary] = useState<TodaySummary>(() => createEmptyTodaySummary(todayKey()));
   const [recentCompleted, setRecentCompleted] = useState<SessionRecord[]>([]);
   const [summaryLoading, setSummaryLoading] = useState(true);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [activeTaskTitle, setActiveTaskTitle] = useState("자유 공부");
 
   const timerRef = useRef(timer);
   const settingsRef = useRef(settings);
@@ -207,6 +209,7 @@ export function HomeRoute() {
 
   function startTimer() {
     void primeAudio();
+    setActiveTaskTitle(taskTitle.trim() || "자유 공부");
     setSignal(null);
     setTimer({ ...createInitialTimer(settingsRef.current), status: "running" });
   }
@@ -227,6 +230,7 @@ export function HomeRoute() {
 
   function stopTimer() {
     setSignal(null);
+    setActiveTaskTitle("자유 공부");
     setTimer(createIdleTimer(settingsRef.current));
   }
 
@@ -240,7 +244,7 @@ export function HomeRoute() {
       <div className="home-timer__panel">
         <p className="home-timer__eyebrow">오늘의 타이머</p>
         <h1 className="home-timer__clock">{formatClock(timer.remainingSeconds)}</h1>
-        <p className="home-timer__subject">자유 공부</p>
+        <p className="home-timer__subject">{activeTaskTitle}</p>
         <p className="home-timer__phase">{getPhaseLabel(timer.phase, paused)}</p>
         <p className="home-timer__hint">
           집중이나 휴식이 끝나면 화면 신호가 바로 뜨고, 브라우저 소리가 허용되면 효과음도
@@ -279,6 +283,16 @@ export function HomeRoute() {
       </dl>
 
       <div className="home-timer__actions">
+        <label className="home-timer__field">
+          <span>자유 과제명</span>
+          <input
+            type="text"
+            placeholder="예: 수학 숙제, 독서 20분"
+            value={taskTitle}
+            onChange={(event) => setTaskTitle(event.target.value)}
+            disabled={timer.status !== "idle"}
+          />
+        </label>
         {timer.status === "idle" ? (
           <button type="button" className="home-timer__button home-timer__button--primary" onClick={startTimer}>
             집중 시작
