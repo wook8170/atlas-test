@@ -1,6 +1,7 @@
 import type {
   ActiveTimerSnapshot,
-  PomodoroSession,
+  CompletionReason,
+  SessionRecord,
   TimerPhase,
 } from "@/domain/types";
 import { toLocalDateKey } from "@/domain/time";
@@ -98,26 +99,35 @@ export function resumeActiveTimer(
 
 export function buildSessionFromSnapshot(
   snapshot: ActiveTimerSnapshot,
-  status: PomodoroSession["status"],
+  status: "completed" | "interrupted" | "cancelled",
   nowMs = Date.now(),
-): PomodoroSession {
+): SessionRecord {
   const endedAt = new Date(nowMs);
   const durationSec =
     status === "completed"
       ? snapshot.targetDurationSec
       : Math.min(getElapsedSeconds(snapshot, nowMs), snapshot.targetDurationSec);
 
+  const completionReason: CompletionReason =
+    status === "completed"
+      ? "finished"
+      : status === "interrupted"
+        ? "user_stopped"
+        : "abandoned";
+
   return {
     id: crypto.randomUUID(),
-    phase: snapshot.phase,
-    label: snapshot.label,
     scheduleEntryId: snapshot.scheduleEntryId,
+    freeTaskTitle: snapshot.scheduleEntryId ? null : snapshot.label,
+    sessionType: snapshot.phase,
     localDateKey: toLocalDateKey(endedAt),
     startedAt: snapshot.startedAt,
     endedAt: endedAt.toISOString(),
-    durationSec,
-    status,
-    schemaVersion: 2,
+    completed: status === "completed",
+    createdAt: endedAt.toISOString(),
+    elapsedSeconds: durationSec,
+    completionReason,
+    schemaVersion: 1,
   };
 }
 

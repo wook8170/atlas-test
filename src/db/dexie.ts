@@ -1,5 +1,6 @@
 import Dexie, { Table } from "dexie";
 import type {
+  ActiveTimerSnapshot,
   ErrorLog,
   PomodoroSettings,
   SessionRecord,
@@ -36,6 +37,7 @@ class AppDb extends Dexie {
   schedule!: Table<WeeklyScheduleEntry, string>;
   settings!: Table<PomodoroSettings, "default">;
   sessions!: Table<SessionRecord, string>;
+  activeTimer!: Table<ActiveTimerSnapshot, "active">;
   errorLogs!: Table<ErrorLog, string>;
 
   constructor() {
@@ -53,6 +55,7 @@ class AppDb extends Dexie {
         schedule: "id, weekday",
         settings: "id",
         sessions: "id, localDateKey, startedAt, scheduleEntryId, sessionType",
+        activeTimer: "id",
         errorLogs: "id, occurredAt",
       })
       .upgrade((tx) =>
@@ -91,6 +94,14 @@ class AppDb extends Dexie {
             delete mutable.durationSec;
           }),
       );
+    this.version(3).stores({
+      profile: "id",
+      schedule: "id, weekday",
+      settings: "id",
+      sessions: "id, localDateKey, startedAt, scheduleEntryId, sessionType",
+      activeTimer: "id",
+      errorLogs: "id, occurredAt",
+    });
   }
 }
 
