@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import type { PomodoroSettings } from "@/domain/types";
+import { Link } from "react-router-dom";
+import {
+  createEmptyTodaySummary,
+  isCompletedFocusSession,
+  sessionElapsedSeconds,
+  sessionSubjectLabel,
+  sortSessionsNewestFirst,
+} from "@/domain/sessionUtils";
+import type { PomodoroSettings, SessionRecord, TodaySummary } from "@/domain/types";
 import { DEFAULT_SETTINGS, LocalStateRepository } from "@/repositories/LocalStateRepository";
+import { SessionRepository } from "@/repositories/SessionRepository";
 import {
   advanceTimerPhase,
   createInitialTimer,
@@ -31,10 +40,25 @@ function createIdleTimer(settings: PomodoroSettings): TimerState {
   };
 }
 
+function todayKey(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatSessionClock(value: string): string {
+  const [, time = ""] = value.split("T");
+  return time.slice(0, 5) || "--:--";
+}
+
 export function HomeRoute() {
   const [settings, setSettings] = useState<PomodoroSettings>(DEFAULT_SETTINGS);
   const [timer, setTimer] = useState<TimerState>(() => createIdleTimer(DEFAULT_SETTINGS));
   const [signal, setSignal] = useState<TimerSignal | null>(null);
+  const [summary, setSummary] = useState<TodaySummary>(() => createEmptyTodaySummary(todayKey()));
+  const [recentCompleted, setRecentCompleted] = useState<SessionRecord[]>([]);
+  const [summaryLoading, setSummaryLoading] = useState(true);
 
   const timerRef = useRef(timer);
   const settingsRef = useRef(settings);
@@ -67,6 +91,38 @@ export function HomeRoute() {
         setSettings(DEFAULT_SETTINGS);
         setTimer((current) => (current.status === "idle" ? createIdleTimer(DEFAULT_SETTINGS) : current));
       });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSummary() {
+      const date = todayKey();
+      const [sessions, todaySummary] = await Promise.all([
+        SessionRepository.listByDate(date),
+        SessionRepository.todaySummary(date),
+      ]);
+
+      if (!active) {
+        return;
+      }
+
+      setSummary(todaySummary);
+      setRecentCompleted(sortSessionsNewestFirst(sessions).filter(isCompletedFocusSession).slice(0, 3));
+      setSummaryLoading(false);
+    }
+
+    void loadSummary().catch(() => {
+      if (active) {
+        setSummary(createEmptyTodaySummary(todayKey()));
+        setRecentCompleted([]);
+        setSummaryLoading(false);
+      }
+    });
 
     return () => {
       active = false;
@@ -244,6 +300,57 @@ export function HomeRoute() {
           </button>
         ) : null}
       </div>
+
+      <section className="stack-card">
+        <div className="section-heading">
+          <div>
+            <h2>오늘의 집중 기록</h2>
+            <p>완료한 집중 세션과 최근 기록을 한눈에 확인합니다.</p>
+          </div>
+          <Link className="cta-link" to="/records">
+            기록 열기
+          </Link>
+        </div>
+        <div className="summary-grid">
+          <article className="metric-card metric-card--strong">
+            <span className="metric-card__label">완료 세션</span>
+            <strong>{summaryLoading ? "-" : `${summary.completedSessions}회`}</strong>
+          </article>
+          <article className="metric-card">
+            <span className="metric-card__label">집중 시간</span>
+            <strong>{summaryLoading ? "-" : `${Math.round(summary.totalFocusMinutes)}분`}</strong>
+          </article>
+        </div>
+      </section>
+
+      <section className="stack-card">
+        <div className="section-heading">
+          <div>
+            <h2>최근 완료 세션</h2>
+            <p>완료된 집중 세션만 최근 순서로 보여줍니다.</p>
+          </div>
+        </div>
+        {recentCompleted.length > 0 ? (
+          <ul className="session-list">
+            {recentCompleted.map((session) => (
+              <li className="session-list__item" key={session.id}>
+                <div>
+                  <strong>{sessionSubjectLabel(session)}</strong>
+                  <p>
+                    {formatSessionClock(session.startedAt)} - {formatSessionClock(session.endedAt)} ·{" "}
+                    {Math.round(sessionElapsedSeconds(session) / 60)}분
+                  </p>
+                </div>
+                <span className="status-pill status-pill--completed">완료</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-state">
+            오늘 완료된 집중 세션이 아직 없습니다. 기록 탭에서 첫 세션을 남겨보세요.
+          </p>
+        )}
+      </section>
     </section>
   );
 }
