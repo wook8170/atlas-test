@@ -10,7 +10,7 @@ export function compareScheduleEntries(a: WeeklyScheduleEntry, b: WeeklySchedule
     a.weekday - b.weekday ||
     a.startMinute - b.startMinute ||
     a.endMinute - b.endMinute ||
-    a.subject.localeCompare(b.subject)
+    a.subjectName.localeCompare(b.subjectName, "ko-KR")
   );
 }
 
