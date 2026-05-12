@@ -1,322 +1,402 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type {
-  ActiveTimerSnapshot,
-  PomodoroSettings,
-  WeeklyScheduleEntry,
-} from "@/domain/types";
 import {
-  buildSessionFromSnapshot,
-  createFocusTimerSnapshot,
-  formatDuration,
-  getElapsedSeconds,
+  createEmptyTodaySummary,
+  isCompletedFocusSession,
+  sessionElapsedSeconds,
+  sessionSubjectLabel,
+  sortSessionsNewestFirst,
+} from "@/domain/sessionUtils";
+import type { PomodoroSettings, SessionRecord, TodaySummary } from "@/domain/types";
+import { DEFAULT_SETTINGS, LocalStateRepository } from "@/repositories/LocalStateRepository";
+import { SessionRepository } from "@/repositories/SessionRepository";
+import {
+  advanceTimerPhase,
+  createInitialTimer,
+  formatClock,
   getPhaseLabel,
-  getRemainingSeconds,
-  isTimerComplete,
-  isTimerPaused,
-  pauseActiveTimer,
-  resumeActiveTimer,
-} from "@/domain/timer";
-import {
-  getCurrentScheduleEntry,
-  minutesToClock,
-  WEEKDAY_LABELS,
-} from "@/domain/time";
-import {
-  LocalStateRepository,
-  ScheduleRepository,
-  SessionRepository,
-} from "@/repositories";
+  type TimerSignal,
+  type TimerSnapshot,
+} from "./homeTimerModel";
+
+type TimerStatus = "idle" | "running" | "paused";
+
+interface TimerState extends TimerSnapshot {
+  status: TimerStatus;
+}
+
+type BrowserAudioContext = AudioContext & { close?: () => Promise<void> };
+
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
+function createIdleTimer(settings: PomodoroSettings): TimerState {
+  return {
+    ...createInitialTimer(settings),
+    status: "idle",
+  };
+}
+
+function todayKey(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatSessionClock(value: string): string {
+  const [, time = ""] = value.split("T");
+  return time.slice(0, 5) || "--:--";
+}
 
 export function HomeRoute() {
-  const [settings, setSettings] = useState<PomodoroSettings | null>(null);
-  const [todayEntries, setTodayEntries] = useState<WeeklyScheduleEntry[]>([]);
-  const [snapshot, setSnapshot] = useState<ActiveTimerSnapshot | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [settings, setSettings] = useState<PomodoroSettings>(DEFAULT_SETTINGS);
+  const [timer, setTimer] = useState<TimerState>(() => createIdleTimer(DEFAULT_SETTINGS));
+  const [signal, setSignal] = useState<TimerSignal | null>(null);
+  const [summary, setSummary] = useState<TodaySummary>(() => createEmptyTodaySummary(todayKey()));
+  const [recentCompleted, setRecentCompleted] = useState<SessionRecord[]>([]);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [activeTaskTitle, setActiveTaskTitle] = useState("자유 공부");
 
-  async function refreshTodayEntries(referenceDate = new Date()): Promise<void> {
-    const weekday = referenceDate.getDay() as WeeklyScheduleEntry["weekday"];
-    const entries = await ScheduleRepository.listByWeekday(weekday);
-    setTodayEntries(entries);
-  }
-
-  async function finishTimer(
-    currentSnapshot: ActiveTimerSnapshot,
-    status: "completed" | "interrupted" | "cancelled",
-    endedAtMs = Date.now(),
-  ): Promise<void> {
-    if (
-      currentSnapshot.phase === "focus" &&
-      (status === "completed" || getElapsedSeconds(currentSnapshot, endedAtMs) > 0)
-    ) {
-      await SessionRepository.append(
-        buildSessionFromSnapshot(currentSnapshot, status, endedAtMs),
-      );
-    }
-
-    await LocalStateRepository.clearActiveTimer();
-    setSnapshot(null);
-    setNowMs(Date.now());
-    setNotice(
-      status === "completed"
-        ? `${currentSnapshot.label} 집중을 끝까지 해냈어요.`
-        : "진행 중이던 타이머를 정리했어요.",
-    );
-  }
-
-  async function loadHome(): Promise<void> {
-    setLoading(true);
-    const [nextSettings, savedSnapshot] = await Promise.all([
-      LocalStateRepository.getSettings(),
-      LocalStateRepository.getActiveTimer(),
-      refreshTodayEntries(new Date()),
-    ]);
-    setSettings(nextSettings);
-
-    if (savedSnapshot) {
-      if (isTimerComplete(savedSnapshot, Date.now())) {
-        await finishTimer(savedSnapshot, "completed");
-        setNotice("앱을 다시 열었을 때 이미 끝난 집중 시간을 기록으로 옮겼어요.");
-      } else {
-        setSnapshot(savedSnapshot);
-        setNotice("진행 중이던 타이머를 이어서 불러왔어요.");
-      }
-    } else {
-      setSnapshot(null);
-    }
-
-    setLoading(false);
-  }
+  const timerRef = useRef(timer);
+  const settingsRef = useRef(settings);
+  const deadlineRef = useRef<number | null>(null);
+  const audioContextRef = useRef<BrowserAudioContext | null>(null);
 
   useEffect(() => {
-    void loadHome();
+    timerRef.current = timer;
+  }, [timer]);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  useEffect(() => {
+    let active = true;
+
+    void LocalStateRepository.getSettings()
+      .then((nextSettings) => {
+        if (!active) {
+          return;
+        }
+        setSettings(nextSettings);
+        setTimer((current) => (current.status === "idle" ? createIdleTimer(nextSettings) : current));
+      })
+      .catch(() => {
+        if (!active) {
+          return;
+        }
+        setSettings(DEFAULT_SETTINGS);
+        setTimer((current) => (current.status === "idle" ? createIdleTimer(DEFAULT_SETTINGS) : current));
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (!snapshot || isTimerPaused(snapshot)) {
-      return;
-    }
+    let active = true;
 
-    const intervalId = window.setInterval(() => {
-      const nextNow = Date.now();
-      setNowMs(nextNow);
-      if (isTimerComplete(snapshot, nextNow)) {
-        window.clearInterval(intervalId);
-        void finishTimer(snapshot, "completed", nextNow);
+    async function loadSummary() {
+      const date = todayKey();
+      const [sessions, todaySummary] = await Promise.all([
+        SessionRepository.listByDate(date),
+        SessionRepository.todaySummary(date),
+      ]);
+
+      if (!active) {
+        return;
       }
-    }, 1000);
 
-    return () => window.clearInterval(intervalId);
-  }, [snapshot]);
-
-  const currentEntry = getCurrentScheduleEntry(todayEntries, new Date(nowMs));
-  const recommendedEntry = currentEntry ?? todayEntries[0];
-  const remainingSeconds = snapshot
-    ? getRemainingSeconds(snapshot, nowMs)
-    : (settings?.focusMinutes ?? 25) * 60;
-  const progressPercent = snapshot
-    ? Math.min(
-        100,
-        Math.round(
-          (getElapsedSeconds(snapshot, nowMs) / snapshot.targetDurationSec) * 100,
-        ),
-      )
-    : 0;
-
-  async function startFocus(entry?: WeeklyScheduleEntry): Promise<void> {
-    if (snapshot) {
-      setNotice("먼저 진행 중인 타이머를 끝내거나 멈춰 주세요.");
-      return;
+      setSummary(todaySummary);
+      setRecentCompleted(sortSessionsNewestFirst(sessions).filter(isCompletedFocusSession).slice(0, 3));
+      setSummaryLoading(false);
     }
 
-    const nextSettings = settings ?? (await LocalStateRepository.getSettings());
-    const nextSnapshot = createFocusTimerSnapshot({
-      durationMinutes: nextSettings.focusMinutes,
-      label: entry?.subject ?? "자유 집중",
-      scheduleEntryId: entry?.id ?? null,
+    void loadSummary().catch(() => {
+      if (active) {
+        setSummary(createEmptyTodaySummary(todayKey()));
+        setRecentCompleted([]);
+        setSummaryLoading(false);
+      }
     });
 
-    await LocalStateRepository.saveActiveTimer(nextSnapshot);
-    setSettings(nextSettings);
-    setSnapshot(nextSnapshot);
-    setNowMs(Date.now());
-    setNotice(
-      entry ? `${entry.subject} 집중을 시작했어요.` : "자유 집중을 시작했어요.",
-    );
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (timer.status !== "running") {
+      deadlineRef.current = null;
+      return;
+    }
+
+    deadlineRef.current = Date.now() + timer.remainingSeconds * 1000;
+    const intervalId = window.setInterval(() => {
+      const deadline = deadlineRef.current;
+      if (!deadline) {
+        return;
+      }
+      const nextRemaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setTimer((current) => {
+        if (current.status !== "running" || current.remainingSeconds === nextRemaining) {
+          return current;
+        }
+        return { ...current, remainingSeconds: nextRemaining };
+      });
+    }, 250);
+
+    return () => window.clearInterval(intervalId);
+  }, [timer.status]);
+
+  useEffect(() => {
+    if (timer.status !== "running" || timer.remainingSeconds !== 0) {
+      return;
+    }
+
+    const { next, signal: nextSignal } = advanceTimerPhase(timer, settingsRef.current);
+    deadlineRef.current = Date.now() + next.totalSeconds * 1000;
+    setSignal(nextSignal);
+    playSignalTone(audioContextRef.current, nextSignal.kind);
+    setTimer({ ...next, status: "running" });
+  }, [timer]);
+
+  useEffect(() => {
+    if (!signal) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSignal(null);
+    }, 4200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [signal]);
+
+  useEffect(() => {
+    return () => {
+      const audioContext = audioContextRef.current;
+      if (audioContext && typeof audioContext.close === "function") {
+        void audioContext.close();
+      }
+    };
+  }, []);
+
+  const paused = timer.status === "paused";
+
+  async function primeAudio() {
+    const AudioCtor = window.AudioContext ?? window.webkitAudioContext;
+    if (!AudioCtor) {
+      return;
+    }
+
+    const currentAudioContext = audioContextRef.current ?? new AudioCtor();
+    audioContextRef.current = currentAudioContext;
+    if (currentAudioContext.state === "suspended") {
+      try {
+        await currentAudioContext.resume();
+      } catch {
+        return;
+      }
+    }
   }
 
-  async function handlePause(): Promise<void> {
-    if (!snapshot) return;
-    const paused = pauseActiveTimer(snapshot);
-    await LocalStateRepository.saveActiveTimer(paused);
-    setSnapshot(paused);
-    setNotice("잠깐 멈추고 있어요.");
+  function startTimer() {
+    void primeAudio();
+    setActiveTaskTitle(taskTitle.trim() || "자유 공부");
+    setSignal(null);
+    setTimer({ ...createInitialTimer(settingsRef.current), status: "running" });
   }
 
-  async function handleResume(): Promise<void> {
-    if (!snapshot) return;
-    const resumed = resumeActiveTimer(snapshot);
-    await LocalStateRepository.saveActiveTimer(resumed);
-    setSnapshot(resumed);
-    setNowMs(Date.now());
-    setNotice("다시 이어서 하고 있어요.");
+  function pauseTimer() {
+    const deadline = deadlineRef.current;
+    const remainingSeconds = deadline
+      ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+      : timerRef.current.remainingSeconds;
+
+    setTimer((current) => ({ ...current, status: "paused", remainingSeconds }));
   }
 
-  async function handleStop(): Promise<void> {
-    if (!snapshot) return;
-    await finishTimer(snapshot, "cancelled");
+  function resumeTimer() {
+    void primeAudio();
+    setTimer((current) => ({ ...current, status: "running" }));
   }
 
-  if (loading) {
-    return (
-      <section className="route route--home">
-        <div className="panel">
-          <p className="route__muted">저장된 시간표와 타이머를 불러오는 중이에요.</p>
-        </div>
-      </section>
-    );
+  function stopTimer() {
+    setSignal(null);
+    setActiveTaskTitle("자유 공부");
+    setTimer(createIdleTimer(settingsRef.current));
   }
+
+  const nextBreakMinutes =
+    (timer.completedFocusSessions + 1) % Math.max(1, Math.round(settings.longBreakEvery)) === 0
+      ? settings.longBreakMinutes
+      : settings.breakMinutes;
 
   return (
-    <section className="route route--home">
-      <div className="route__stack">
-        {notice ? <div className="notice-card">{notice}</div> : null}
-
-        <section className="hero-card">
-          <p className="hero-card__eyebrow">
-            {snapshot ? getPhaseLabel(snapshot.phase) : "지금 시작할 준비"}
-          </p>
-          <h1 className="hero-card__title">
-            {snapshot
-              ? snapshot.label
-              : currentEntry
-                ? `${currentEntry.subject} 전 집중 준비`
-                : "오늘의 첫 집중을 시작해 볼까요?"}
-          </h1>
-          <p className="hero-card__subtitle">
-            {snapshot
-              ? isTimerPaused(snapshot)
-                ? "잠깐 멈춘 상태예요. 다시 이어서 할 수 있어요."
-                : "앱을 닫았다가 다시 열어도 같은 타이머를 이어서 복원해요."
-              : "기본 저장 방식은 그대로 두고, 진행 중 타이머만 별도 스냅샷으로 기억해요."}
-          </p>
-
-          <div className="timer-readout">{formatDuration(remainingSeconds)}</div>
-          <div
-            aria-hidden="true"
-            className="progress-bar"
-          >
-            <span style={{ width: `${progressPercent}%` }} />
-          </div>
-
-          <div className="timer-meta">
-            <span>기본 집중 {settings?.focusMinutes ?? 25}분</span>
-            <span>오늘 {WEEKDAY_LABELS[new Date(nowMs).getDay()]}요일 시간표</span>
-          </div>
-
-          <div className="action-row">
-            {!snapshot ? (
-              <button
-                className="button button--primary"
-                onClick={() => void startFocus(recommendedEntry)}
-                type="button"
-              >
-                {recommendedEntry ? `${recommendedEntry.subject} 집중 시작` : "집중 시작"}
-              </button>
-            ) : isTimerPaused(snapshot) ? (
-              <button
-                className="button button--primary"
-                onClick={() => void handleResume()}
-                type="button"
-              >
-                계속하기
-              </button>
-            ) : (
-              <button
-                className="button button--primary"
-                onClick={() => void handlePause()}
-                type="button"
-              >
-                잠깐 멈춤
-              </button>
-            )}
-
-            {snapshot ? (
-              <button
-                className="button button--ghost"
-                onClick={() => void handleStop()}
-                type="button"
-              >
-                여기서 종료
-              </button>
-            ) : (
-              <Link className="button button--ghost" to="/settings">
-                시간 바꾸기
-              </Link>
-            )}
-          </div>
-        </section>
-
-        <section className="panel">
-          <div className="section-heading">
-            <div>
-              <h2>오늘 시간표</h2>
-              <p>
-                저장된 시간표는 새로고침 후에도 같은 Dexie 저장소에서 다시 읽어와요.
-              </p>
-            </div>
-            <Link className="text-link" to="/timetable">
-              시간표 수정
-            </Link>
-          </div>
-
-          {todayEntries.length === 0 ? (
-            <div className="empty-card">
-              <p className="empty-card__title">아직 오늘 시간표가 없어요.</p>
-              <p className="route__muted">
-                시간표 탭에서 과목과 시간을 저장해 두면 이 화면이 그대로 복원돼요.
-              </p>
-            </div>
-          ) : (
-            <ul className="schedule-list">
-              {todayEntries.map((entry) => {
-                const isCurrent = currentEntry?.id === entry.id;
-                const isLinked = snapshot?.scheduleEntryId === entry.id;
-                return (
-                  <li
-                    className={`schedule-card${isCurrent ? " schedule-card--current" : ""}`}
-                    key={entry.id}
-                  >
-                    <div className="schedule-card__time">
-                      {minutesToClock(entry.startMinute)} - {minutesToClock(entry.endMinute)}
-                    </div>
-                    <div className="schedule-card__content">
-                      <strong>{entry.subject}</strong>
-                      <p>
-                        {isLinked
-                          ? "현재 타이머와 연결되어 있어요."
-                          : isCurrent
-                            ? "지금 이 시간표에 맞춰 집중하기 좋아요."
-                            : "저장된 시간표 항목이에요."}
-                      </p>
-                    </div>
-                    <button
-                      className="button button--secondary"
-                      disabled={Boolean(snapshot)}
-                      onClick={() => void startFocus(entry)}
-                      type="button"
-                    >
-                      {snapshot ? "진행 중" : "이 과목으로 시작"}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+    <section className={`route route--home home-timer home-timer--${timer.phase}`}>
+      <div className="home-timer__panel">
+        <p className="home-timer__eyebrow">오늘의 타이머</p>
+        <h1 className="home-timer__clock">{formatClock(timer.remainingSeconds)}</h1>
+        <p className="home-timer__subject">{activeTaskTitle}</p>
+        <p className="home-timer__phase">{getPhaseLabel(timer.phase, paused)}</p>
+        <p className="home-timer__hint">
+          집중이나 휴식이 끝나면 화면 신호가 바로 뜨고, 브라우저 소리가 허용되면 효과음도
+          함께 재생됩니다.
+        </p>
       </div>
+
+      {signal ? (
+        <div
+          className={`home-timer__signal home-timer__signal--${signal.accent}`}
+          role="status"
+          aria-live="assertive"
+        >
+          <strong>{signal.title}</strong>
+          <span>{signal.message}</span>
+        </div>
+      ) : null}
+
+      <dl className="home-timer__stats">
+        <div>
+          <dt>집중</dt>
+          <dd>{settings.focusMinutes}분</dd>
+        </div>
+        <div>
+          <dt>짧은 휴식</dt>
+          <dd>{settings.breakMinutes}분</dd>
+        </div>
+        <div>
+          <dt>다음 휴식</dt>
+          <dd>{timer.phase === "focus" ? `${nextBreakMinutes}분` : `${settings.focusMinutes}분`}</dd>
+        </div>
+        <div>
+          <dt>완료한 집중</dt>
+          <dd>{timer.completedFocusSessions}회</dd>
+        </div>
+      </dl>
+
+      <div className="home-timer__actions">
+        <label className="home-timer__field">
+          <span>자유 과제명</span>
+          <input
+            type="text"
+            placeholder="예: 수학 숙제, 독서 20분"
+            value={taskTitle}
+            onChange={(event) => setTaskTitle(event.target.value)}
+            disabled={timer.status !== "idle"}
+          />
+        </label>
+        {timer.status === "idle" ? (
+          <button type="button" className="home-timer__button home-timer__button--primary" onClick={startTimer}>
+            집중 시작
+          </button>
+        ) : null}
+        {timer.status === "running" ? (
+          <button type="button" className="home-timer__button home-timer__button--primary" onClick={pauseTimer}>
+            일시정지
+          </button>
+        ) : null}
+        {timer.status === "paused" ? (
+          <button type="button" className="home-timer__button home-timer__button--primary" onClick={resumeTimer}>
+            다시 시작
+          </button>
+        ) : null}
+        {timer.status !== "idle" ? (
+          <button type="button" className="home-timer__button home-timer__button--ghost" onClick={stopTimer}>
+            끝내기
+          </button>
+        ) : null}
+      </div>
+
+      <section className="stack-card">
+        <div className="section-heading">
+          <div>
+            <h2>오늘의 집중 기록</h2>
+            <p>완료한 집중 세션과 최근 기록을 한눈에 확인합니다.</p>
+          </div>
+          <Link className="cta-link" to="/records">
+            기록 열기
+          </Link>
+        </div>
+        <div className="summary-grid">
+          <article className="metric-card metric-card--strong">
+            <span className="metric-card__label">완료 세션</span>
+            <strong>{summaryLoading ? "-" : `${summary.completedSessions}회`}</strong>
+          </article>
+          <article className="metric-card">
+            <span className="metric-card__label">집중 시간</span>
+            <strong>{summaryLoading ? "-" : `${Math.round(summary.totalFocusMinutes)}분`}</strong>
+          </article>
+        </div>
+      </section>
+
+      <section className="stack-card">
+        <div className="section-heading">
+          <div>
+            <h2>최근 완료 세션</h2>
+            <p>완료된 집중 세션만 최근 순서로 보여줍니다.</p>
+          </div>
+        </div>
+        {recentCompleted.length > 0 ? (
+          <ul className="session-list">
+            {recentCompleted.map((session) => (
+              <li className="session-list__item" key={session.id}>
+                <div>
+                  <strong>{sessionSubjectLabel(session)}</strong>
+                  <p>
+                    {formatSessionClock(session.startedAt)} - {formatSessionClock(session.endedAt)} ·{" "}
+                    {Math.round(sessionElapsedSeconds(session) / 60)}분
+                  </p>
+                </div>
+                <span className="status-pill status-pill--completed">완료</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-state">
+            오늘 완료된 집중 세션이 아직 없습니다. 기록 탭에서 첫 세션을 남겨보세요.
+          </p>
+        )}
+      </section>
     </section>
   );
+}
+
+function playSignalTone(
+  audioContext: BrowserAudioContext | null,
+  kind: TimerSignal["kind"],
+) {
+  if (!audioContext || audioContext.state === "closed") {
+    return;
+  }
+
+  if (audioContext.state === "suspended") {
+    void audioContext.resume().catch(() => undefined);
+  }
+
+  const notes = kind === "focus-complete" ? [784, 988] : [988, 784];
+  notes.forEach((note, index) => {
+    const startAt = audioContext.currentTime + index * 0.18;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(note, startAt);
+
+    gainNode.gain.setValueAtTime(0.0001, startAt);
+    gainNode.gain.exponentialRampToValueAtTime(0.12, startAt + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.14);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start(startAt);
+    oscillator.stop(startAt + 0.16);
+  });
 }

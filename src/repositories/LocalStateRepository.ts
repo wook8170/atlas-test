@@ -8,12 +8,15 @@ import type {
 
 const DEFAULT_SETTINGS: PomodoroSettings = {
   id: "default",
-  focusMinutes: 25,
+  focusMinutes: 15,
   breakMinutes: 5,
   longBreakMinutes: 15,
   longBreakEvery: 4,
+  updatedAt: new Date(0).toISOString(),
   schemaVersion: 1,
 };
+
+export { DEFAULT_SETTINGS };
 
 export const LocalStateRepository = {
   async getProfile(): Promise<StudentProfile | undefined> {
@@ -27,7 +30,12 @@ export const LocalStateRepository = {
   },
   async updateSettings(patch: Partial<PomodoroSettings>): Promise<void> {
     const cur = await this.getSettings();
-    await db.settings.put({ ...cur, ...patch, id: "default" });
+    await db.settings.put({
+      ...cur,
+      ...patch,
+      id: "default",
+      updatedAt: new Date().toISOString(),
+    });
   },
   async getActiveTimer(): Promise<ActiveTimerSnapshot | undefined> {
     return db.activeTimer.get("active");
