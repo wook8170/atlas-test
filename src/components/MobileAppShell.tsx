@@ -13,7 +13,10 @@ export function MobileAppShell({ children }: { children: ReactNode }) {
   const current = TABS.find((t) => pathname.startsWith(t.to))?.label ?? "초딩 뽀모도로";
   return (
     <div className="app-shell">
-      <header className="app-shell__header">{current}</header>
+      <header className="app-shell__header">
+        <span className="app-shell__header-kicker">초등 학습 타이머</span>
+        <strong>{current}</strong>
+      </header>
       <main className="app-shell__main">{children}</main>
       <nav className="app-shell__tabs">
         {TABS.map((t) => (
