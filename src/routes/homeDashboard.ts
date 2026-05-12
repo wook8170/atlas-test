@@ -1,6 +1,6 @@
 import type {
-  PomodoroSession,
   PomodoroSettings,
+  SessionRecord,
   StudentProfile,
   WeeklyScheduleEntry,
 } from "@/domain/types";
@@ -63,7 +63,7 @@ interface BuildHomeDashboardInput {
   profile?: StudentProfile;
   settings: PomodoroSettings;
   entries: WeeklyScheduleEntry[];
-  sessions: PomodoroSession[];
+  sessions: SessionRecord[];
   now: Date;
 }
 
@@ -104,7 +104,7 @@ export function getLocalDateKey(date: Date): string {
 export function buildTodayAgenda(input: {
   entries: WeeklyScheduleEntry[];
   settings: PomodoroSettings;
-  sessions: PomodoroSession[];
+  sessions: SessionRecord[];
   now: Date;
 }): TodayAgendaItem[] {
   const { entries, settings, sessions, now } = input;
@@ -112,7 +112,7 @@ export function buildTodayAgenda(input: {
   const completedCountByEntryId = new Map<string, number>();
 
   sessions
-    .filter((session) => session.status === "completed" && session.scheduleEntryId)
+    .filter((session) => session.sessionType === "focus" && session.completed && session.scheduleEntryId)
     .forEach((session) => {
       const entryId = session.scheduleEntryId!;
       completedCountByEntryId.set(entryId, (completedCountByEntryId.get(entryId) ?? 0) + 1);
@@ -131,8 +131,8 @@ export function buildTodayAgenda(input: {
 
       return {
         id: entry.id,
-        subject: entry.subject,
-        color: entry.color,
+        subject: entry.subjectName,
+        color: entry.subjectColor,
         timeRangeLabel: `${formatMinuteOfDay(entry.startMinute)}-${formatMinuteOfDay(entry.endMinute)}`,
         plannedFocusMinutes: settings.focusMinutes,
         plannedBreakMinutes: settings.breakMinutes,
@@ -234,10 +234,12 @@ export function buildHomeDashboard(input: BuildHomeDashboardInput): HomeDashboar
     sessions,
     now,
   });
-  const completedSessions = sessions.filter((session) => session.status === "completed");
+  const completedSessions = sessions.filter(
+    (session) => session.sessionType === "focus" && session.completed,
+  );
   const completedSessionCount = completedSessions.length;
   const totalFocusMinutes = completedSessions.reduce(
-    (sum, session) => sum + Math.round(session.durationSec / 60),
+    (sum, session) => sum + Math.round(sessionElapsedSeconds(session) / 60),
     0,
   );
   const completedAgendaCount = agenda.filter((item) => item.status === "completed").length;
@@ -262,4 +264,16 @@ export function buildHomeDashboard(input: BuildHomeDashboardInput): HomeDashboar
       totalFocusMinutes,
     }),
   };
+}
+
+function sessionElapsedSeconds(session: SessionRecord): number {
+  if (typeof session.elapsedSeconds === "number" && session.elapsedSeconds >= 0) {
+    return session.elapsedSeconds;
+  }
+  const startedAtMs = Date.parse(session.startedAt);
+  const endedAtMs = Date.parse(session.endedAt);
+  if (Number.isNaN(startedAtMs) || Number.isNaN(endedAtMs) || endedAtMs < startedAtMs) {
+    return 0;
+  }
+  return Math.floor((endedAtMs - startedAtMs) / 1000);
 }

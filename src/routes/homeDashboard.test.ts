@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type {
-  PomodoroSession,
   PomodoroSettings,
+  SessionRecord,
   WeeklyScheduleEntry,
 } from "@/domain/types";
 import { buildHomeDashboard, buildTodayAgenda, formatRemainingTime } from "./homeDashboard";
@@ -21,8 +21,9 @@ const entries: WeeklyScheduleEntry[] = [
     weekday: 2,
     startMinute: 540,
     endMinute: 600,
-    subject: "수학",
-    color: "#4A90E2",
+    subjectName: "수학",
+    subjectColor: "#4A90E2",
+    isActive: true,
     schemaVersion: 1,
   },
   {
@@ -30,8 +31,9 @@ const entries: WeeklyScheduleEntry[] = [
     weekday: 2,
     startMinute: 610,
     endMinute: 660,
-    subject: "과학",
-    color: "#40B38A",
+    subjectName: "과학",
+    subjectColor: "#40B38A",
+    isActive: true,
     schemaVersion: 1,
   },
 ];
@@ -52,23 +54,33 @@ describe("home dashboard helpers", () => {
   });
 
   it("switches the summary panel to completed after all agenda items are done", () => {
-    const sessions: PomodoroSession[] = [
+    const sessions: SessionRecord[] = [
       {
         id: "s-1",
         scheduleEntryId: "math",
+        freeTaskTitle: null,
+        sessionType: "focus",
         startedAt: "2026-05-12T09:00:00+09:00",
         endedAt: "2026-05-12T09:25:00+09:00",
-        durationSec: 1500,
-        status: "completed",
+        completed: true,
+        localDateKey: "2026-05-12",
+        createdAt: "2026-05-12T09:25:00+09:00",
+        elapsedSeconds: 1500,
+        completionReason: "finished",
         schemaVersion: 1,
       },
       {
         id: "s-2",
         scheduleEntryId: "science",
+        freeTaskTitle: null,
+        sessionType: "focus",
         startedAt: "2026-05-12T10:10:00+09:00",
         endedAt: "2026-05-12T10:35:00+09:00",
-        durationSec: 1500,
-        status: "completed",
+        completed: true,
+        localDateKey: "2026-05-12",
+        createdAt: "2026-05-12T10:35:00+09:00",
+        elapsedSeconds: 1500,
+        completionReason: "finished",
         schemaVersion: 1,
       },
     ];
