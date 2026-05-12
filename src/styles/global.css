@@ -19,3 +19,159 @@ html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-syst
 
 .route h1 { font-size: 20px; margin: 0 0 12px; }
 .route p { color: var(--color-text-muted); font-size: 14px; }
+
+.pomodoro-home {
+  display: grid;
+  gap: 16px;
+}
+
+.pomodoro-home__hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.pomodoro-home__hero p {
+  margin: 0;
+  max-width: 40ch;
+}
+
+.pomodoro-home__badge {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #e9eefc;
+  color: #2548aa;
+}
+
+.pomodoro-home__badge--running {
+  background: #ddf4e6;
+  color: #1c7b4b;
+}
+
+.pomodoro-home__badge--paused {
+  background: #fff0c7;
+  color: #8d6500;
+}
+
+.pomodoro-home__badge--completed {
+  background: #efe3ff;
+  color: #7040c9;
+}
+
+.pomodoro-home__timer-card,
+.pomodoro-home__summary {
+  background:
+    radial-gradient(circle at top right, rgba(53, 102, 226, 0.14), transparent 36%),
+    linear-gradient(180deg, #ffffff, #f4f7ff);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 12px 32px rgba(15, 18, 26, 0.06);
+}
+
+.pomodoro-home__eyebrow {
+  margin: 0 0 10px;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pomodoro-home__clock {
+  margin: 0;
+  color: var(--color-text) !important;
+  font-size: clamp(48px, 16vw, 88px) !important;
+  line-height: 0.95;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+}
+
+.pomodoro-home__status {
+  margin: 14px 0 4px;
+  color: var(--color-text) !important;
+  font-size: 15px !important;
+  font-weight: 700;
+}
+
+.pomodoro-home__message {
+  margin: 0;
+}
+
+.pomodoro-home__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.pomodoro-home__action {
+  appearance: none;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 700;
+  padding: 14px 16px;
+}
+
+.pomodoro-home__action:disabled {
+  opacity: 0.45;
+}
+
+.pomodoro-home__action--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.pomodoro-home__action--danger {
+  border-color: #f0b9c0;
+  color: #a52e42;
+}
+
+.pomodoro-home__summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.pomodoro-home__summary-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.pomodoro-home__summary-header span {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pomodoro-home__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.pomodoro-home__summary-card {
+  display: grid;
+  gap: 6px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 16px;
+}
+
+.pomodoro-home__summary-card strong {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.pomodoro-home__summary-card span {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
