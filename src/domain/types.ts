@@ -20,8 +20,13 @@ export interface WeeklyScheduleEntry {
   weekday: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   startMinute: number;
   endMinute: number;
-  subject: string;
-  color: string;
+  subjectName: string;
+  subjectColor: string;
+  focusDurationMin?: number;
+  breakDurationMin?: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   schemaVersion: 1;
 }
 
@@ -31,6 +36,7 @@ export interface PomodoroSettings {
   breakMinutes: number;
   longBreakMinutes: number;
   longBreakEvery: number;
+  updatedAt?: string;
   schemaVersion: 1;
 }
 
