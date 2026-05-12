@@ -17,7 +17,11 @@ export function MobileAppShell({ children }: { children: ReactNode }) {
       <main className="app-shell__main">{children}</main>
       <nav className="app-shell__tabs">
         {TABS.map((t) => (
-          <NavLink key={t.to} to={t.to} className="app-shell__tab">
+          <NavLink
+            key={t.to}
+            to={t.to}
+            className={({ isActive }) => (isActive ? "app-shell__tab active" : "app-shell__tab")}
+          >
             {t.label}
           </NavLink>
         ))}

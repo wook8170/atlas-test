@@ -17,5 +17,147 @@ html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-syst
 .app-shell__tab { padding: 12px; text-align: center; color: var(--color-text-muted); text-decoration: none; font-size: 14px; }
 .app-shell__tab.active { color: var(--color-primary); font-weight: 600; }
 
-.route h1 { font-size: 20px; margin: 0 0 12px; }
-.route p { color: var(--color-text-muted); font-size: 14px; }
+.route { display: grid; gap: 16px; }
+.route h1 { font-size: 20px; margin: 0; }
+.route h2 { margin: 0; font-size: 18px; }
+.route p { color: var(--color-text-muted); font-size: 14px; margin: 0; line-height: 1.5; }
+.route__intro { display: grid; gap: 8px; }
+.route__lead { max-width: 34ch; }
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 0;
+  background: var(--color-primary);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.button--ghost {
+  background: #eef2ff;
+  color: var(--color-primary);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #edf2ff;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pill--focus {
+  background: #e8f7ec;
+  color: #177245;
+}
+
+.timer-card,
+.schedule-card,
+.empty-state,
+.callout {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+}
+
+.timer-card {
+  gap: 14px;
+  box-shadow: 0 12px 24px rgba(24, 39, 75, 0.08);
+}
+
+.timer-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.timer-card__subject {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.timer-card__clock {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--color-text);
+}
+
+.timer-card__meta {
+  font-size: 13px;
+}
+
+.timer-card__progress {
+  height: 10px;
+  border-radius: 999px;
+  background: #eef1f6;
+  overflow: hidden;
+}
+
+.timer-card__progress-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.schedule-list {
+  display: grid;
+  gap: 12px;
+}
+
+.schedule-card {
+  gap: 10px;
+}
+
+.schedule-card__time {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.schedule-card__title {
+  font-size: 19px;
+}
+
+.schedule-card__hint {
+  max-width: 30ch;
+}
+
+.callout {
+  gap: 8px;
+}
+
+.callout--active {
+  background: #f5f8ff;
+}
+
+.empty-state {
+  justify-items: start;
+}
