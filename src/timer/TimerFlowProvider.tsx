@@ -58,8 +58,8 @@ export function TimerFlowProvider({ children }: { children: ReactNode }) {
       setActiveTimer({
         id: crypto.randomUUID(),
         scheduleEntryId: entry.id,
-        subject: entry.subject,
-        color: entry.color,
+        subject: entry.subjectName,
+        color: entry.subjectColor,
         phase: "focus",
         startedAt: startedAt.toISOString(),
         endsAt: new Date(startedAt.getTime() + totalSeconds * 1000).toISOString(),
