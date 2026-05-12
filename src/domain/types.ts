@@ -34,14 +34,32 @@ export interface PomodoroSettings {
   schemaVersion: 1;
 }
 
+export type TimerPhase = "focus" | "short-break" | "long-break";
+
+export interface ActiveTimerSnapshot {
+  id: "active";
+  phase: TimerPhase;
+  label: string;
+  scheduleEntryId: string | null;
+  startedAt: string;
+  elapsedSec: number;
+  targetDurationSec: number;
+  pausedAt: string | null;
+  cycleIndex: number;
+  schemaVersion: 1;
+}
+
 export interface PomodoroSession {
   id: string;
-  scheduleEntryId?: string;
+  phase: TimerPhase;
+  label: string;
+  scheduleEntryId: string | null;
+  localDateKey: string;
   startedAt: string;
   endedAt?: string;
   durationSec: number;
   status: "completed" | "interrupted" | "cancelled";
-  schemaVersion: 1;
+  schemaVersion: 2;
 }
 
 export interface ErrorLog {

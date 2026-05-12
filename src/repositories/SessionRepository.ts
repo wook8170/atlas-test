@@ -6,14 +6,21 @@ export const SessionRepository = {
     await db.sessions.put(session);
   },
   async listByDate(date: string): Promise<PomodoroSession[]> {
-    return db.sessions.where("startedAt").startsWith(date).toArray();
+    return (await db.sessions.where("localDateKey").equals(date).toArray()).sort(
+      (left, right) => right.startedAt.localeCompare(left.startedAt),
+    );
+  },
+  async listRecent(date: string): Promise<PomodoroSession[]> {
+    return this.listByDate(date);
   },
   async todaySummary(date: string): Promise<TodaySummary> {
     const sessions = await this.listByDate(date);
-    const completed = sessions.filter((s) => s.status === "completed");
+    const completed = sessions.filter(
+      (s) => s.status === "completed" && s.phase === "focus",
+    );
     const bySubject = new Map<string, number>();
     completed.forEach((s) => {
-      const k = s.scheduleEntryId ?? "자유";
+      const k = s.label || "자유 집중";
       bySubject.set(k, (bySubject.get(k) ?? 0) + 1);
     });
     return {
