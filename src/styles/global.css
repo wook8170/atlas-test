@@ -19,3 +19,159 @@ html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-syst
 
 .route h1 { font-size: 20px; margin: 0 0 12px; }
 .route p { color: var(--color-text-muted); font-size: 14px; }
+
+.route--timetable { display: flex; flex-direction: column; gap: 16px; }
+
+.timetable__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top right, rgba(53, 102, 226, 0.12), transparent 40%),
+    var(--color-surface);
+}
+
+.timetable__hero h1 { margin-bottom: 6px; }
+
+.timetable__count {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(53, 102, 226, 0.1);
+  color: var(--color-primary);
+  font-size: 13px;
+}
+
+.timetable__weekday-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(72px, 1fr));
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.timetable__weekday-button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  min-width: 72px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.timetable__weekday-button.is-active {
+  border-color: transparent;
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(53, 102, 226, 0.2);
+}
+
+.timetable__weekday-short {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.timetable__weekday-full {
+  font-size: 12px;
+}
+
+.timetable__panel {
+  padding: 18px;
+  border: 1px dashed var(--color-border);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.timetable__panel--status p { margin: 0; }
+
+.timetable__list {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.timetable__entry {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: 0 8px 20px rgba(15, 18, 26, 0.04);
+}
+
+.timetable__entry-order {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--entry-color), rgba(255, 255, 255, 0.95));
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.timetable__entry-order span {
+  line-height: 1;
+  font-size: 20px;
+}
+
+.timetable__entry-order small {
+  font-size: 11px;
+  color: rgba(15, 18, 26, 0.72);
+}
+
+.timetable__entry-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.timetable__entry-subject-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.timetable__entry-subject {
+  font-size: 17px;
+}
+
+.timetable__entry-period {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(53, 102, 226, 0.08);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.timetable__entry-time {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+@media (max-width: 520px) {
+  .timetable__weekday-strip {
+    display: flex;
+  }
+
+  .timetable__hero,
+  .timetable__entry-subject-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
