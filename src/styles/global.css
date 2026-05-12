@@ -1,27 +1,113 @@
 :root {
-  --color-bg: #f8f9fa;
+  --color-bg: #f4efe6;
   --color-surface: #ffffff;
   --color-text: #0f121a;
-  --color-text-muted: #5a667e;
-  --color-border: #dde1e9;
-  --color-primary: #3566e2;
+  --color-text-muted: #5b6579;
+  --color-border: #d8d1c6;
+  --color-primary: #2f6bff;
+  --color-primary-soft: #e6eeff;
   --color-focus: #ff8f3d;
   --color-break: #1fa17c;
-  --color-shadow: rgba(15, 18, 26, 0.08);
+  --color-success: #22805a;
+  --color-success-soft: #dff5ea;
+  --color-warning: #c66d1f;
+  --color-warning-soft: #fff0de;
+  --color-shadow: 0 16px 36px rgba(30, 35, 52, 0.08);
+  --radius-xl: 24px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
-* { box-sizing: border-box; }
-html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-system, sans-serif; background: var(--color-bg); color: var(--color-text); }
 
-.app-shell { display: flex; flex-direction: column; min-height: 100%; }
-.app-shell__header { padding: 16px; font-size: 18px; font-weight: 600; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
-.app-shell__main { flex: 1; padding: 16px; overflow-y: auto; }
-.app-shell__tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--color-border); background: var(--color-surface); padding-bottom: var(--safe-bottom); }
-.app-shell__tab { padding: 12px; text-align: center; color: var(--color-text-muted); text-decoration: none; font-size: 14px; }
-.app-shell__tab.active { color: var(--color-primary); font-weight: 600; }
+* {
+  box-sizing: border-box;
+}
 
-.route h1 { font-size: 20px; margin: 0 0 12px; }
-.route p { color: var(--color-text-muted); font-size: 14px; }
+html, body, #root {
+  margin: 0;
+  height: 100%;
+  font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+  background:
+    radial-gradient(circle at top left, #fff8dc 0%, transparent 28%),
+    linear-gradient(180deg, #fffaf0 0%, #f4efe6 46%, #efe7dc 100%);
+  color: var(--color-text);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.app-shell__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 18px 20px 14px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: rgba(255, 250, 240, 0.88);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(216, 209, 198, 0.7);
+}
+
+.app-shell__main {
+  flex: 1;
+  padding: 18px 16px 24px;
+  overflow-y: auto;
+}
+
+.app-shell__tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 10px 12px calc(10px + var(--safe-bottom));
+  border-top: 1px solid rgba(216, 209, 198, 0.8);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+}
+
+.app-shell__tab {
+  border-radius: 999px;
+  padding: 10px 8px;
+  text-align: center;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-shell__tab.active {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.route h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.route p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.today-focus {
+  display: grid;
+  gap: 16px;
+}
 
 .home-timer {
   display: grid;
@@ -31,9 +117,9 @@ html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-syst
 .home-timer__panel,
 .home-timer__stats,
 .home-timer__signal {
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   background: var(--color-surface);
-  box-shadow: 0 16px 40px var(--color-shadow);
+  box-shadow: var(--color-shadow);
 }
 
 .home-timer__panel {
@@ -42,7 +128,7 @@ html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-syst
   padding: 24px;
   background:
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.85), transparent 36%),
-    linear-gradient(145deg, rgba(53, 102, 226, 0.14), rgba(255, 143, 61, 0.14));
+    linear-gradient(145deg, rgba(47, 107, 255, 0.14), rgba(255, 143, 61, 0.14));
 }
 
 .home-timer--focus .home-timer__panel {
@@ -134,7 +220,7 @@ html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-syst
 
 .home-timer__stats div {
   padding: 14px;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: rgba(15, 18, 26, 0.04);
 }
 
@@ -171,13 +257,277 @@ html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-syst
 .home-timer__button--primary {
   color: #ffffff;
   background: linear-gradient(135deg, var(--color-primary), #5b88f2);
-  box-shadow: 0 14px 24px rgba(53, 102, 226, 0.22);
+  box-shadow: 0 14px 24px rgba(47, 107, 255, 0.22);
 }
 
 .home-timer__button--ghost {
   color: var(--color-text);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+}
+
+.today-focus__hero,
+.today-focus__summary,
+.today-focus__active,
+.today-focus__empty,
+.today-focus__cta {
+  background: var(--color-surface);
+  border: 1px solid rgba(216, 209, 198, 0.72);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--color-shadow);
+}
+
+.today-focus__hero {
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+  background:
+    linear-gradient(135deg, rgba(47, 107, 255, 0.12), rgba(255, 210, 113, 0.18)),
+    var(--color-surface);
+}
+
+.today-focus__eyebrow {
+  margin-bottom: 8px;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.today-focus__hero-copy {
+  max-width: 30ch;
+}
+
+.today-focus__summary {
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.today-focus__summary-item {
+  display: grid;
+  gap: 6px;
+}
+
+.today-focus__summary-item span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.today-focus__summary-item strong {
+  font-size: 18px;
+}
+
+.today-focus__active {
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.today-focus__active-head,
+.today-focus__active-body,
+.today-focus__card-head,
+.today-focus__card-foot,
+.today-focus__card-meta,
+.today-focus__card-subject {
+  display: flex;
+  align-items: center;
+}
+
+.today-focus__active-head,
+.today-focus__card-head,
+.today-focus__card-foot {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.today-focus__active-body {
+  gap: 12px;
+}
+
+.today-focus__active-copy {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+}
+
+.today-focus__active-copy strong,
+.today-focus__card-subject strong,
+.today-focus__cta strong {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.today-focus__countdown {
+  min-width: 88px;
+  padding: 12px 10px;
+  border-radius: var(--radius-lg);
+  background: #0f121a;
+  color: #ffffff;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.today-focus__active-id {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.today-focus__agenda {
+  display: grid;
+  gap: 12px;
+}
+
+.today-focus__card {
+  width: 100%;
+  border: 1px solid rgba(216, 209, 198, 0.82);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--color-shadow);
+  display: grid;
+  gap: 12px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.today-focus__card:hover {
+  transform: translateY(-1px);
+}
+
+.today-focus__card--selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 16px 36px rgba(47, 107, 255, 0.16);
+}
+
+.today-focus__card--current {
+  background:
+    linear-gradient(135deg, rgba(255, 243, 221, 0.98), rgba(255, 255, 255, 0.95)),
+    #ffffff;
+}
+
+.today-focus__card-time {
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.today-focus__card-meta,
+.today-focus__card-foot {
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.today-focus__card-meta span,
+.today-focus__card-foot span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f7f3ec;
+}
+
+.today-focus__color {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(15, 18, 26, 0.08);
+}
+
+.today-focus__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #efe9dd;
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.today-focus__badge--upcoming {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.today-focus__badge--completed {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.today-focus__badge--in_progress,
+.today-focus__badge--progress {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.today-focus__cta {
+  position: sticky;
+  bottom: 12px;
+  padding: 14px;
+  display: grid;
+  gap: 14px;
+}
+
+.today-focus__primary-button,
+.today-focus__secondary-button {
+  border: 0;
+  border-radius: 16px;
+  min-height: 52px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.today-focus__primary-button {
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 14px 24px rgba(47, 107, 255, 0.24);
+}
+
+.today-focus__primary-button:disabled {
+  background: #9fb6f4;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.today-focus__secondary-button {
+  background: #f4f1eb;
+  color: var(--color-text);
+}
+
+.today-focus__empty {
+  padding: 24px 18px;
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.today-focus__empty h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.today-focus__muted,
+.today-focus__error {
+  padding: 0 4px;
+  font-size: 14px;
+}
+
+.today-focus__error {
+  color: #b24527;
+  font-weight: 700;
 }
 
 @keyframes signal-pop {
@@ -203,11 +553,20 @@ html, body, #root { margin: 0; height: 100%; font-family: system-ui, -apple-syst
 
 @media (min-width: 768px) {
   .app-shell__main {
-    padding: 24px;
+    padding: 24px 20px 32px;
   }
 
   .home-timer {
     max-width: 640px;
     margin: 0 auto;
+  }
+
+  .today-focus__agenda {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .today-focus__cta {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    align-items: center;
   }
 }

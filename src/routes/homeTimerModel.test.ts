@@ -13,8 +13,8 @@ describe("homeTimerModel", () => {
     const timer = createInitialTimer(DEFAULT_SETTINGS);
 
     expect(timer.phase).toBe("focus");
-    expect(timer.remainingSeconds).toBe(25 * 60);
-    expect(timer.totalSeconds).toBe(25 * 60);
+    expect(timer.remainingSeconds).toBe(DEFAULT_SETTINGS.focusMinutes * 60);
+    expect(timer.totalSeconds).toBe(DEFAULT_SETTINGS.focusMinutes * 60);
     expect(timer.completedFocusSessions).toBe(0);
   });
 
@@ -30,7 +30,7 @@ describe("homeTimerModel", () => {
     );
 
     expect(next.phase).toBe("break");
-    expect(next.remainingSeconds).toBe(5 * 60);
+    expect(next.remainingSeconds).toBe(DEFAULT_SETTINGS.breakMinutes * 60);
     expect(next.completedFocusSessions).toBe(1);
     expect(signal.kind).toBe("focus-complete");
     expect(signal.title).toContain("집중");
@@ -48,7 +48,7 @@ describe("homeTimerModel", () => {
     );
 
     expect(next.phase).toBe("break");
-    expect(next.remainingSeconds).toBe(15 * 60);
+    expect(next.remainingSeconds).toBe(DEFAULT_SETTINGS.longBreakMinutes * 60);
     expect(next.completedFocusSessions).toBe(DEFAULT_SETTINGS.longBreakEvery);
   });
 
@@ -64,7 +64,7 @@ describe("homeTimerModel", () => {
     );
 
     expect(next.phase).toBe("focus");
-    expect(next.remainingSeconds).toBe(25 * 60);
+    expect(next.remainingSeconds).toBe(DEFAULT_SETTINGS.focusMinutes * 60);
     expect(next.completedFocusSessions).toBe(2);
     expect(signal.kind).toBe("break-complete");
     expect(signal.title).toContain("휴식");
