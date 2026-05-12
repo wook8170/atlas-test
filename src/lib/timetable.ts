@@ -25,10 +25,10 @@ export type TimetableEditorValues = {
   id?: string;
   weekday: WeeklyScheduleEntry["weekday"];
   order: number;
-  subject: string;
+  subjectName: string;
   startMinute: number;
   endMinute: number;
-  color: string;
+  subjectColor: string;
 };
 
 export type TodayAgenda = {
@@ -45,9 +45,11 @@ export function compareScheduleEntries(
   right: WeeklyScheduleEntry,
 ): number {
   if (left.weekday !== right.weekday) return left.weekday - right.weekday;
-  if (left.order !== right.order) return left.order - right.order;
+  const leftOrder = left.order ?? left.startMinute;
+  const rightOrder = right.order ?? right.startMinute;
+  if (leftOrder !== rightOrder) return leftOrder - rightOrder;
   if (left.startMinute !== right.startMinute) return left.startMinute - right.startMinute;
-  return left.subject.localeCompare(right.subject, "ko-KR");
+  return left.subjectName.localeCompare(right.subjectName, "ko-KR");
 }
 
 export function sortScheduleEntries(entries: WeeklyScheduleEntry[]): WeeklyScheduleEntry[] {
@@ -55,7 +57,7 @@ export function sortScheduleEntries(entries: WeeklyScheduleEntry[]): WeeklySched
 }
 
 export function getNextOrder(entries: WeeklyScheduleEntry[]): number {
-  return entries.reduce((maxOrder, entry) => Math.max(maxOrder, entry.order), 0) + 1;
+  return entries.reduce((maxOrder, entry) => Math.max(maxOrder, entry.order ?? 0), 0) + 1;
 }
 
 export function minuteToTime(minute: number): string {
@@ -111,13 +113,13 @@ export function getTodayAgenda(
 }
 
 export function getScheduleValidationError(
-  values: TimetableEditorValues,
+  values: TimetableEditorValues | WeeklyScheduleEntry,
   siblings: WeeklyScheduleEntry[],
 ): string | null {
-  if (!values.subject.trim()) {
+  if (!values.subjectName.trim()) {
     return "과목명을 입력해 주세요.";
   }
-  if (!Number.isInteger(values.order) || values.order < 1) {
+  if (!Number.isInteger(values.order) || (values.order ?? 0) < 1) {
     return "교시 순서는 1 이상의 숫자여야 해요.";
   }
   if (values.startMinute >= values.endMinute) {

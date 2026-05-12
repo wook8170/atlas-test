@@ -1,14 +1,16 @@
 import { db } from "@/db/dexie";
 import type { WeeklyScheduleEntry } from "@/domain/types";
-import { sortScheduleEntries } from "@/lib/timetable";
 
 export const ScheduleRepository = {
   async listByWeekday(weekday: number): Promise<WeeklyScheduleEntry[]> {
-    const entries = await db.schedule.where("weekday").equals(weekday).toArray();
-    return sortScheduleEntries(entries);
+    const entries = await db.schedule.where("weekday").equals(weekday).sortBy("startMinute");
+    return entries.filter((entry) => entry.isActive !== false);
   },
   async listAll(): Promise<WeeklyScheduleEntry[]> {
-    return sortScheduleEntries(await db.schedule.toArray());
+    return db.schedule.toArray();
+  },
+  async getById(id: string): Promise<WeeklyScheduleEntry | undefined> {
+    return db.schedule.get(id);
   },
   async upsert(entry: WeeklyScheduleEntry): Promise<void> {
     await db.schedule.put(entry);

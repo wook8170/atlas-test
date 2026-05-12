@@ -18,13 +18,16 @@ export interface StudentProfile {
 export interface WeeklyScheduleEntry {
   id: string;
   weekday: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  order: number;
+  order?: number;
   startMinute: number;
   endMinute: number;
-  subject: string;
-  color: string;
-  createdAt: string;
-  updatedAt: string;
+  subjectName: string;
+  subjectColor: string;
+  focusDurationMin?: number;
+  breakDurationMin?: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   schemaVersion: 1;
 }
 
@@ -34,17 +37,31 @@ export interface PomodoroSettings {
   breakMinutes: number;
   longBreakMinutes: number;
   longBreakEvery: number;
+  updatedAt?: string;
   schemaVersion: 1;
 }
 
-export interface PomodoroSession {
+export type SessionType = "focus" | "short-break" | "long-break";
+
+export type CompletionReason =
+  | "finished"
+  | "user_stopped"
+  | "abandoned"
+  | null;
+
+export interface SessionRecord {
   id: string;
-  scheduleEntryId?: string;
+  scheduleEntryId: string | null;
+  freeTaskTitle: string | null;
+  sessionType: SessionType;
   startedAt: string;
-  endedAt?: string;
-  durationSec: number;
-  status: "completed" | "interrupted" | "cancelled";
+  endedAt: string;
+  completed: boolean;
+  localDateKey: string;
+  createdAt: string;
   schemaVersion: 1;
+  elapsedSeconds?: number;
+  completionReason?: CompletionReason;
 }
 
 export interface ErrorLog {

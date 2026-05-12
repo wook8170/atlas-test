@@ -17,10 +17,10 @@ type EditorState = {
   id?: string;
   weekday: WeeklyScheduleEntry["weekday"];
   order: number;
-  subject: string;
+  subjectName: string;
   startTime: string;
   endTime: string;
-  color: string;
+  subjectColor: string;
 };
 
 const DEFAULT_START_TIME = "09:00";
@@ -49,10 +49,10 @@ export function TimetableRoute() {
     setEditor({
       weekday,
       order: getNextOrder(dayEntries),
-      subject: "",
+      subjectName: "",
       startTime: minuteToTime(startMinute),
       endTime: minuteToTime(endMinute),
-      color: COLOR_OPTIONS[dayEntries.length % COLOR_OPTIONS.length].value,
+      subjectColor: COLOR_OPTIONS[dayEntries.length % COLOR_OPTIONS.length].value,
     });
     setError("");
     setNotice("");
@@ -62,11 +62,11 @@ export function TimetableRoute() {
     setEditor({
       id: entry.id,
       weekday: entry.weekday,
-      order: entry.order,
-      subject: entry.subject,
+      order: entry.order ?? getNextOrder(entries.filter((candidate) => candidate.weekday === entry.weekday)),
+      subjectName: entry.subjectName,
       startTime: minuteToTime(entry.startMinute),
       endTime: minuteToTime(entry.endMinute),
-      color: entry.color,
+      subjectColor: entry.subjectColor,
     });
     setError("");
     setNotice("");
@@ -80,15 +80,16 @@ export function TimetableRoute() {
     event.preventDefault();
     if (!editor) return;
 
-    const subject = editor.subject.trim();
+    const subjectName = editor.subjectName.trim();
     const nextEntry: WeeklyScheduleEntry = {
       id: editor.id ?? crypto.randomUUID(),
       weekday: editor.weekday,
       order: editor.order,
-      subject,
+      subjectName,
       startMinute: timeToMinute(editor.startTime),
       endMinute: timeToMinute(editor.endTime),
-      color: editor.color,
+      subjectColor: editor.subjectColor,
+      isActive: true,
       createdAt:
         entries.find((entry) => entry.id === editor.id)?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -124,14 +125,14 @@ export function TimetableRoute() {
   }
 
   async function handleDelete(entry: WeeklyScheduleEntry) {
-    if (!window.confirm(`${entry.subject} 교시를 삭제할까요?`)) return;
+    if (!window.confirm(`${entry.subjectName} 교시를 삭제할까요?`)) return;
 
     try {
       await ScheduleRepository.remove(entry.id);
       await loadEntries();
       setEditor((current) => (current?.id === entry.id ? null : current));
       setError("");
-      setNotice(`${entry.subject} 교시를 삭제했어요.`);
+      setNotice(`${entry.subjectName} 교시를 삭제했어요.`);
     } catch {
       setError("삭제 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.");
       setNotice("");
@@ -198,8 +199,8 @@ export function TimetableRoute() {
               <input
                 placeholder="예: 수학"
                 type="text"
-                value={editor.subject}
-                onChange={(event) => updateEditor("subject", event.target.value)}
+                value={editor.subjectName}
+              onChange={(event) => updateEditor("subjectName", event.target.value)}
               />
             </label>
 
@@ -227,11 +228,11 @@ export function TimetableRoute() {
                 {COLOR_OPTIONS.map((option) => (
                   <label className="color-option" key={option.value}>
                     <input
-                      checked={editor.color === option.value}
+                      checked={editor.subjectColor === option.value}
                       name="entry-color"
                       type="radio"
                       value={option.value}
-                      onChange={(event) => updateEditor("color", event.target.value)}
+                      onChange={(event) => updateEditor("subjectColor", event.target.value)}
                     />
                     <span
                       aria-hidden="true"
@@ -298,12 +299,12 @@ export function TimetableRoute() {
                       <div
                         aria-hidden="true"
                         className="entry-card__accent"
-                        style={{ backgroundColor: entry.color }}
+                        style={{ backgroundColor: entry.subjectColor }}
                       />
                       <div className="entry-card__body">
                         <div className="entry-card__topline">
-                          <span className="entry-order">{entry.order}교시</span>
-                          <strong>{entry.subject}</strong>
+                          <span className="entry-order">{entry.order ?? "-"}교시</span>
+                          <strong>{entry.subjectName}</strong>
                         </div>
                         <p>
                           {minuteToTime(entry.startMinute)} - {minuteToTime(entry.endMinute)}

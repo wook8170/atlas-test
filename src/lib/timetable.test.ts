@@ -9,8 +9,9 @@ function createEntry(overrides: Partial<WeeklyScheduleEntry>): WeeklyScheduleEnt
     order: overrides.order ?? 1,
     startMinute: overrides.startMinute ?? 540,
     endMinute: overrides.endMinute ?? 585,
-    subject: overrides.subject ?? "수학",
-    color: overrides.color ?? "#4f7cff",
+    subjectName: overrides.subjectName ?? "수학",
+    subjectColor: overrides.subjectColor ?? "#4f7cff",
+    isActive: overrides.isActive ?? true,
     createdAt: overrides.createdAt ?? "2026-05-11T00:00:00.000Z",
     updatedAt: overrides.updatedAt ?? "2026-05-11T00:00:00.000Z",
     schemaVersion: 1,
@@ -20,9 +21,9 @@ function createEntry(overrides: Partial<WeeklyScheduleEntry>): WeeklyScheduleEnt
 describe("getTodayAgenda", () => {
   it("현재 교시와 다음 교시, 남은 시간을 계산한다", () => {
     const entries = [
-      createEntry({ id: "a", weekday: 1, order: 1, startMinute: 540, endMinute: 585, subject: "국어" }),
-      createEntry({ id: "b", weekday: 1, order: 2, startMinute: 600, endMinute: 645, subject: "수학" }),
-      createEntry({ id: "c", weekday: 2, order: 1, startMinute: 540, endMinute: 585, subject: "과학" }),
+      createEntry({ id: "a", weekday: 1, order: 1, startMinute: 540, endMinute: 585, subjectName: "국어" }),
+      createEntry({ id: "b", weekday: 1, order: 2, startMinute: 600, endMinute: 645, subjectName: "수학" }),
+      createEntry({ id: "c", weekday: 2, order: 1, startMinute: 540, endMinute: 585, subjectName: "과학" }),
     ];
 
     const agenda = getTodayAgenda(entries, new Date("2026-05-11T09:20:00+09:00"));
@@ -34,8 +35,8 @@ describe("getTodayAgenda", () => {
 
   it("현재 교시가 없으면 다음 교시를 안내한다", () => {
     const entries = [
-      createEntry({ id: "a", weekday: 1, order: 1, startMinute: 540, endMinute: 585, subject: "국어" }),
-      createEntry({ id: "b", weekday: 1, order: 2, startMinute: 600, endMinute: 645, subject: "수학" }),
+      createEntry({ id: "a", weekday: 1, order: 1, startMinute: 540, endMinute: 585, subjectName: "국어" }),
+      createEntry({ id: "b", weekday: 1, order: 2, startMinute: 600, endMinute: 645, subjectName: "수학" }),
     ];
 
     const agenda = getTodayAgenda(entries, new Date("2026-05-11T08:30:00+09:00"));
