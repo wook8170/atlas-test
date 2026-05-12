@@ -42,6 +42,20 @@ export interface PomodoroSettings {
 }
 
 export type SessionType = "focus" | "short-break" | "long-break";
+export type TimerPhase = SessionType;
+
+export interface ActiveTimerSnapshot {
+  id: "active";
+  phase: TimerPhase;
+  label: string;
+  scheduleEntryId: string | null;
+  startedAt: string;
+  elapsedSec: number;
+  targetDurationSec: number;
+  pausedAt: string | null;
+  cycleIndex: number;
+  schemaVersion: 1;
+}
 
 export type CompletionReason =
   | "finished"

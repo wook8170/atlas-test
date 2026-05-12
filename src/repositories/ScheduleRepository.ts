@@ -1,6 +1,7 @@
 import { db } from "@/db/dexie";
 import { getCurrentOrNextEntry, sortScheduleEntries } from "@/domain/schedule";
 import type { WeeklyScheduleEntry } from "@/domain/types";
+import { sortScheduleEntries } from "@/domain/time";
 
 export const ScheduleRepository = {
   async listByWeekday(weekday: number): Promise<WeeklyScheduleEntry[]> {
