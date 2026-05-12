@@ -15,8 +15,9 @@ describe("timetable helpers", () => {
         weekday: 1,
         startMinute: 540,
         endMinute: 580,
-        subject: "국어",
-        color: "#ffb86b",
+        subjectName: "국어",
+        subjectColor: "#ffb86b",
+        isActive: true,
         schemaVersion: 1,
       },
       {
@@ -24,8 +25,9 @@ describe("timetable helpers", () => {
         weekday: 1,
         startMinute: 600,
         endMinute: 640,
-        subject: "수학",
-        color: "#78d6ff",
+        subjectName: "수학",
+        subjectColor: "#78d6ff",
+        isActive: true,
         schemaVersion: 1,
       },
     ];
