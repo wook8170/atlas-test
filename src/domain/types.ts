@@ -34,14 +34,51 @@ export interface PomodoroSettings {
   schemaVersion: 1;
 }
 
-export interface PomodoroSession {
-  id: string;
-  scheduleEntryId?: string;
+export type TimerSessionType = "focus" | "shortBreak" | "longBreak";
+
+export type TimerSessionStatus =
+  | "running"
+  | "paused"
+  | "completed"
+  | "cancelled";
+
+export type ActiveTimerStatus = Extract<TimerSessionStatus, "running" | "paused">;
+export type TerminalTimerSessionStatus = Extract<
+  TimerSessionStatus,
+  "completed" | "cancelled"
+>;
+
+export interface ActiveTimerSnapshot {
+  id: "active";
+  sessionId: string;
+  sessionType: TimerSessionType;
   startedAt: string;
-  endedAt?: string;
-  durationSec: number;
-  status: "completed" | "interrupted" | "cancelled";
+  expectedEndAt: string;
+  status: ActiveTimerStatus;
+  completed: false;
+  earnedStars: 0;
+  targetDurationSec: number;
+  remainingSec: number;
+  scheduleEntryId: string | null;
+  freeTaskTitle: string | null;
   schemaVersion: 1;
+}
+
+export interface PomodoroSessionRecord {
+  id: string;
+  sessionType: TimerSessionType;
+  startedAt: string;
+  expectedEndAt: string;
+  actualEndAt: string;
+  status: TerminalTimerSessionStatus;
+  completed: boolean;
+  earnedStars: number;
+  targetDurationSec: number;
+  actualDurationSec: number;
+  scheduleEntryId: string | null;
+  freeTaskTitle: string | null;
+  localDateKey: string;
+  schemaVersion: 2;
 }
 
 export interface ErrorLog {
@@ -55,7 +92,7 @@ export interface ErrorLog {
 
 export interface TodaySummary {
   date: string;
-  completedSessions: number;
+  completedFocusCount: number;
   totalFocusMinutes: number;
-  bySubject: Array<{ subject: string; count: number }>;
+  earnedStars: number;
 }

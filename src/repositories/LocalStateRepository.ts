@@ -1,6 +1,11 @@
 // 학생 프로필 + 뽀모도로 설정 + 스티커 카운트 — 같이 읽히는 루트 상태.
 import { db } from "@/db/dexie";
-import type { PomodoroSettings, StudentProfile } from "@/domain/types";
+import { ACTIVE_TIMER_ID } from "@/domain/timerSession";
+import type {
+  ActiveTimerSnapshot,
+  PomodoroSettings,
+  StudentProfile,
+} from "@/domain/types";
 
 const DEFAULT_SETTINGS: PomodoroSettings = {
   id: "default",
@@ -24,5 +29,14 @@ export const LocalStateRepository = {
   async updateSettings(patch: Partial<PomodoroSettings>): Promise<void> {
     const cur = await this.getSettings();
     await db.settings.put({ ...cur, ...patch, id: "default" });
+  },
+  async getActiveTimer(): Promise<ActiveTimerSnapshot | null> {
+    return (await db.activeTimer.get(ACTIVE_TIMER_ID)) ?? null;
+  },
+  async saveActiveTimer(snapshot: ActiveTimerSnapshot): Promise<void> {
+    await db.activeTimer.put({ ...snapshot, id: ACTIVE_TIMER_ID });
+  },
+  async clearActiveTimer(): Promise<void> {
+    await db.activeTimer.delete(ACTIVE_TIMER_ID);
   },
 };
