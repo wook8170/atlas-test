@@ -71,7 +71,7 @@ export function validateTimetableDraft(draft: TimetableDraft): string | null {
 
 export function toWeeklyScheduleEntry(
   draft: TimetableDraft,
-  id = crypto.randomUUID(),
+  id?: WeeklyScheduleEntry["id"],
 ): WeeklyScheduleEntry {
   const startMinute = parseTime(draft.startTime);
   const endMinute = parseTime(draft.endTime);
@@ -81,7 +81,7 @@ export function toWeeklyScheduleEntry(
   }
 
   return {
-    id,
+    id: id ?? crypto.randomUUID(),
     weekday: draft.weekday,
     startMinute,
     endMinute,
