@@ -34,13 +34,20 @@ export interface PomodoroSettings {
   schemaVersion: 1;
 }
 
+export type PomodoroSessionStatus = "completed" | "interrupted" | "cancelled";
+export type PomodoroSessionType = "focus" | "short-break" | "long-break";
+
 export interface PomodoroSession {
   id: string;
   scheduleEntryId?: string;
+  subjectSnapshot?: string;
+  freeTaskTitle?: string;
+  localDateKey?: string;
+  sessionType?: PomodoroSessionType;
   startedAt: string;
   endedAt?: string;
   durationSec: number;
-  status: "completed" | "interrupted" | "cancelled";
+  status: PomodoroSessionStatus;
   schemaVersion: 1;
 }
 
@@ -57,5 +64,6 @@ export interface TodaySummary {
   date: string;
   completedSessions: number;
   totalFocusMinutes: number;
+  totalFocusSeconds: number;
   bySubject: Array<{ subject: string; count: number }>;
 }

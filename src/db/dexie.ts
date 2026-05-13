@@ -1,4 +1,5 @@
 import Dexie, { Table } from "dexie";
+import { getLocalDateKey } from "@/domain/sessionRecords";
 import type {
   ErrorLog,
   PomodoroSession,
@@ -23,6 +24,23 @@ class AppDb extends Dexie {
       sessions: "id, startedAt, scheduleEntryId",
       errorLogs: "id, occurredAt",
     });
+    this.version(2)
+      .stores({
+        profile: "id",
+        schedule: "id, weekday",
+        settings: "id",
+        sessions: "id, startedAt, endedAt, status, scheduleEntryId, localDateKey",
+        errorLogs: "id, occurredAt",
+      })
+      .upgrade((tx) =>
+        tx
+          .table("sessions")
+          .toCollection()
+          .modify((session: PomodoroSession) => {
+            session.localDateKey ??= getLocalDateKey(session.startedAt);
+            session.sessionType ??= "focus";
+          }),
+      );
   }
 }
 

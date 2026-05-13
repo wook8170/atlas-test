@@ -1,26 +1,51 @@
 import { db } from "@/db/dexie";
+import {
+  buildSessionHistoryItems,
+  buildTodaySummary,
+  getLocalDateKey,
+  type SessionHistoryItem,
+} from "@/domain/sessionRecords";
 import type { PomodoroSession, TodaySummary } from "@/domain/types";
+
+function normalizeSession(session: PomodoroSession): PomodoroSession {
+  return {
+    ...session,
+    localDateKey: session.localDateKey ?? getLocalDateKey(session.startedAt),
+    sessionType: session.sessionType ?? "focus",
+  };
+}
+
+export type { SessionHistoryItem };
 
 export const SessionRepository = {
   async append(session: PomodoroSession): Promise<void> {
-    await db.sessions.put(session);
+    await db.sessions.put(normalizeSession(session));
   },
   async listByDate(date: string): Promise<PomodoroSession[]> {
-    return db.sessions.where("startedAt").startsWith(date).toArray();
+    return (await db.sessions.where("localDateKey").equals(date).toArray()).map(
+      normalizeSession,
+    );
+  },
+  async listRecent(limit = 10): Promise<SessionHistoryItem[]> {
+    const [sessions, scheduleEntries] = await Promise.all([
+      db.sessions.toArray(),
+      db.schedule.toArray(),
+    ]);
+    return buildSessionHistoryItems({
+      sessions: sessions.map(normalizeSession),
+      scheduleEntries,
+      limit,
+    });
   },
   async todaySummary(date: string): Promise<TodaySummary> {
-    const sessions = await this.listByDate(date);
-    const completed = sessions.filter((s) => s.status === "completed");
-    const bySubject = new Map<string, number>();
-    completed.forEach((s) => {
-      const k = s.scheduleEntryId ?? "자유";
-      bySubject.set(k, (bySubject.get(k) ?? 0) + 1);
+    const [sessions, scheduleEntries] = await Promise.all([
+      this.listByDate(date),
+      db.schedule.toArray(),
+    ]);
+    return buildTodaySummary({
+      dateKey: date,
+      sessions,
+      scheduleEntries,
     });
-    return {
-      date,
-      completedSessions: completed.length,
-      totalFocusMinutes: completed.reduce((sum, s) => sum + s.durationSec, 0) / 60,
-      bySubject: [...bySubject.entries()].map(([subject, count]) => ({ subject, count })),
-    };
   },
 };
