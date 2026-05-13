@@ -88,6 +88,7 @@ function formatDuration(session: SessionRecord): string {
 
 export function RecordsRoute() {
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
+  const [recentSessions, setRecentSessions] = useState<SessionRecord[]>([]);
   const [summary, setSummary] = useState<TodaySummary>(() => createEmptyTodaySummary(todayKey()));
   const [form, setForm] = useState<SessionFormState>(() => createDefaultForm());
   const [error, setError] = useState<string | null>(null);
@@ -96,12 +97,14 @@ export function RecordsRoute() {
 
   const loadData = async () => {
     const date = todayKey();
-    const [todaySessions, todaySummary] = await Promise.all([
+    const [todaySessions, todaySummary, recentRecords] = await Promise.all([
       SessionRepository.listByDate(date),
       SessionRepository.todaySummary(date),
+      SessionRepository.listRecent(8),
     ]);
 
     setSessions(sortSessionsNewestFirst(todaySessions));
+    setRecentSessions(recentRecords);
     setSummary(todaySummary);
     setLoading(false);
   };
@@ -286,6 +289,38 @@ export function RecordsRoute() {
         ) : (
           <p className="empty-state">
             아직 오늘 기록이 없습니다. 첫 세션을 저장하면 완료 수와 목록이 바로 갱신됩니다.
+          </p>
+        )}
+      </section>
+
+      <section className="stack-card">
+        <div className="section-heading">
+          <div>
+            <h2>최근 기록</h2>
+            <p>기기에 저장된 집중 세션을 최신 순서로 확인합니다.</p>
+          </div>
+        </div>
+
+        {recentSessions.length > 0 ? (
+          <ul className="session-list">
+            {recentSessions.map((session) => (
+              <li className="session-list__item" key={session.id}>
+                <div>
+                  <strong>{sessionSubjectLabel(session)}</strong>
+                  <p>
+                    {formatDayLabel(session.localDateKey)} · {formatClock(session.startedAt)} -{" "}
+                    {formatClock(session.endedAt)} · {formatDuration(session)}
+                  </p>
+                </div>
+                <span className={`status-pill status-pill--${toSessionFormStatus(session)}`}>
+                  {STATUS_LABELS[toSessionFormStatus(session)]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-state">
+            아직 저장된 세션 기록이 없습니다. 세션을 저장하면 최근 기록이 쌓입니다.
           </p>
         )}
       </section>

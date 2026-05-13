@@ -67,6 +67,7 @@ export function buildTodaySummary(
     date,
     completedSessions,
     totalFocusMinutes: Number((totalFocusSeconds / 60).toFixed(1)),
+    totalFocusSeconds,
     bySubject: [...bySubject.entries()]
       .map(([subject, count]) => ({ subject, count }))
       .sort((left, right) => right.count - left.count || left.subject.localeCompare(right.subject, "ko-KR")),

@@ -5,6 +5,7 @@ export function createEmptyTodaySummary(date: string): TodaySummary {
     date,
     completedSessions: 0,
     totalFocusMinutes: 0,
+    totalFocusSeconds: 0,
     bySubject: [],
   };
 }
@@ -41,6 +42,10 @@ export function sessionElapsedSeconds(session: SessionRecord): number {
 export function buildTodaySummary(date: string, sessions: SessionRecord[]): TodaySummary {
   const bySubject = new Map<string, number>();
   const completedFocusSessions = sessions.filter(isCompletedFocusSession);
+  const totalFocusSeconds = completedFocusSessions.reduce(
+    (sum, session) => sum + sessionElapsedSeconds(session),
+    0,
+  );
 
   completedFocusSessions.forEach((session) => {
     const subject = sessionSubjectLabel(session);
@@ -50,9 +55,8 @@ export function buildTodaySummary(date: string, sessions: SessionRecord[]): Toda
   return {
     date,
     completedSessions: completedFocusSessions.length,
-    totalFocusMinutes: Math.round(
-      completedFocusSessions.reduce((sum, session) => sum + sessionElapsedSeconds(session), 0) / 60,
-    ),
+    totalFocusMinutes: Math.round(totalFocusSeconds / 60),
+    totalFocusSeconds,
     bySubject: [...bySubject.entries()].map(([subject, count]) => ({ subject, count })),
   };
 }

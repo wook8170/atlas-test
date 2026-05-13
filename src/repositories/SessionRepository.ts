@@ -141,9 +141,16 @@ export const SessionRepository = {
   },
   async todaySummary(date: string): Promise<TodaySummary> {
     const sessions = await this.listByDate(date);
-    const completed = sessions.filter((session) => session.sessionType === "focus" && session.completed);
+    const completed = sessions.filter(
+      (session) => session.sessionType === "focus" && session.completed,
+    );
     const scheduleSubjects = await buildScheduleSubjectMap(completed);
     const bySubject = new Map<string, number>();
+    const totalFocusSeconds = completed.reduce(
+      (sum, session) => sum + deriveElapsedSeconds(session),
+      0,
+    );
+
     completed.forEach((session) => {
       const subject = summarizeSubject(session, scheduleSubjects);
       bySubject.set(subject, (bySubject.get(subject) ?? 0) + 1);
@@ -152,8 +159,8 @@ export const SessionRepository = {
     return {
       date,
       completedSessions: completed.length,
-      totalFocusMinutes:
-        completed.reduce((sum, session) => sum + deriveElapsedSeconds(session), 0) / 60,
+      totalFocusMinutes: Math.round(totalFocusSeconds / 60),
+      totalFocusSeconds,
       bySubject: [...bySubject.entries()].map(([subject, count]) => ({ subject, count })),
     };
   },

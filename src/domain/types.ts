@@ -91,5 +91,6 @@ export interface TodaySummary {
   date: string;
   completedSessions: number;
   totalFocusMinutes: number;
+  totalFocusSeconds: number;
   bySubject: Array<{ subject: string; count: number }>;
 }

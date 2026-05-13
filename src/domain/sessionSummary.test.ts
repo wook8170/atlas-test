@@ -54,6 +54,7 @@ describe("sessionSummary", () => {
       date: "2026-05-11",
       completedSessions: 1,
       totalFocusMinutes: 35,
+      totalFocusSeconds: 2100,
       bySubject: [{ subject: "독서", count: 2 }],
     });
   });
