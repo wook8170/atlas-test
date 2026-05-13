@@ -18,10 +18,16 @@ export interface StudentProfile {
 export interface WeeklyScheduleEntry {
   id: string;
   weekday: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  order?: number;
   startMinute: number;
   endMinute: number;
-  subject: string;
-  color: string;
+  subjectName: string;
+  subjectColor: string;
+  focusDurationMin?: number;
+  breakDurationMin?: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   schemaVersion: 1;
 }
 
@@ -31,24 +37,45 @@ export interface PomodoroSettings {
   breakMinutes: number;
   longBreakMinutes: number;
   longBreakEvery: number;
+  updatedAt?: string;
   schemaVersion: 1;
 }
 
-export type PomodoroSessionStatus = "completed" | "interrupted" | "cancelled";
-export type PomodoroSessionType = "focus" | "short-break" | "long-break";
+export type SessionType = "focus" | "short-break" | "long-break";
+export type TimerPhase = SessionType;
 
-export interface PomodoroSession {
-  id: string;
-  scheduleEntryId?: string;
-  subjectSnapshot?: string;
-  freeTaskTitle?: string;
-  localDateKey?: string;
-  sessionType?: PomodoroSessionType;
+export interface ActiveTimerSnapshot {
+  id: "active";
+  phase: TimerPhase;
+  label: string;
+  scheduleEntryId: string | null;
   startedAt: string;
-  endedAt?: string;
-  durationSec: number;
-  status: PomodoroSessionStatus;
+  elapsedSec: number;
+  targetDurationSec: number;
+  pausedAt: string | null;
+  cycleIndex: number;
   schemaVersion: 1;
+}
+
+export type CompletionReason =
+  | "finished"
+  | "user_stopped"
+  | "abandoned"
+  | null;
+
+export interface SessionRecord {
+  id: string;
+  scheduleEntryId: string | null;
+  freeTaskTitle: string | null;
+  sessionType: SessionType;
+  startedAt: string;
+  endedAt: string;
+  completed: boolean;
+  localDateKey: string;
+  createdAt: string;
+  schemaVersion: 1;
+  elapsedSeconds?: number;
+  completionReason?: CompletionReason;
 }
 
 export interface ErrorLog {

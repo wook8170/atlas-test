@@ -1,13 +1,15 @@
-import type { PomodoroSession, TodaySummary, WeeklyScheduleEntry } from "./types";
+import type { SessionRecord, TodaySummary, WeeklyScheduleEntry } from "./types";
+
+export type SessionHistoryStatus = "completed" | "interrupted" | "cancelled";
 
 export interface SessionHistoryItem {
   id: string;
   dateKey: string;
   subject: string;
-  status: PomodoroSession["status"];
+  status: SessionHistoryStatus;
   durationSec: number;
   startedAt: string;
-  endedAt?: string;
+  endedAt: string;
 }
 
 export function getLocalDateKey(isoString: string): string {
@@ -22,8 +24,8 @@ export function getLocalDateKey(isoString: string): string {
   return `${year}-${month}-${day}`;
 }
 
-export function isFocusSession(session: PomodoroSession): boolean {
-  return session.sessionType === undefined || session.sessionType === "focus";
+export function isFocusSession(session: SessionRecord): boolean {
+  return session.sessionType === "focus";
 }
 
 function buildScheduleMap(
@@ -32,45 +34,61 @@ function buildScheduleMap(
   return new Map(scheduleEntries.map((entry) => [entry.id, entry]));
 }
 
-function getSessionDateKey(session: PomodoroSession): string {
-  return session.localDateKey ?? getLocalDateKey(session.startedAt);
+function getSessionDateKey(session: SessionRecord): string {
+  return session.localDateKey || getLocalDateKey(session.startedAt);
 }
 
-function getSortableTimestamp(session: PomodoroSession): number {
-  const source = session.endedAt ?? session.startedAt;
-  const stamp = Date.parse(source);
+function getSortableTimestamp(session: SessionRecord): number {
+  const stamp = Date.parse(session.endedAt || session.startedAt);
   return Number.isNaN(stamp) ? 0 : stamp;
 }
 
-export function resolveSessionSubject(
-  session: PomodoroSession,
-  scheduleById: ReadonlyMap<string, WeeklyScheduleEntry>,
-): string {
-  if (session.subjectSnapshot?.trim()) {
-    return session.subjectSnapshot.trim();
+export function sessionDurationSec(session: SessionRecord): number {
+  if (typeof session.elapsedSeconds === "number" && session.elapsedSeconds >= 0) {
+    return session.elapsedSeconds;
   }
 
+  const startedAtMs = Date.parse(session.startedAt);
+  const endedAtMs = Date.parse(session.endedAt);
+  if (Number.isNaN(startedAtMs) || Number.isNaN(endedAtMs) || endedAtMs < startedAtMs) {
+    return 0;
+  }
+
+  return Math.floor((endedAtMs - startedAtMs) / 1000);
+}
+
+export function resolveSessionSubject(
+  session: SessionRecord,
+  scheduleById: ReadonlyMap<string, WeeklyScheduleEntry>,
+): string {
   if (session.freeTaskTitle?.trim()) {
     return session.freeTaskTitle.trim();
   }
 
   if (session.scheduleEntryId) {
-    return scheduleById.get(session.scheduleEntryId)?.subject ?? "연결 과목 없음";
+    return scheduleById.get(session.scheduleEntryId)?.subjectName ?? "연결 과목 없음";
   }
 
   return "자유 학습";
 }
 
+export function toSessionHistoryStatus(session: SessionRecord): SessionHistoryStatus {
+  if (session.completed) {
+    return "completed";
+  }
+  return session.completionReason === "abandoned" ? "cancelled" : "interrupted";
+}
+
 export function buildTodaySummary(args: {
   dateKey: string;
-  sessions: PomodoroSession[];
+  sessions: SessionRecord[];
   scheduleEntries: WeeklyScheduleEntry[];
 }): TodaySummary {
   const scheduleById = buildScheduleMap(args.scheduleEntries);
   const completedSessions = args.sessions.filter(
     (session) =>
       isFocusSession(session) &&
-      session.status === "completed" &&
+      session.completed &&
       getSessionDateKey(session) === args.dateKey,
   );
 
@@ -80,7 +98,7 @@ export function buildTodaySummary(args: {
   completedSessions.forEach((session) => {
     const subject = resolveSessionSubject(session, scheduleById);
     bySubject.set(subject, (bySubject.get(subject) ?? 0) + 1);
-    totalFocusSeconds += session.durationSec;
+    totalFocusSeconds += sessionDurationSec(session);
   });
 
   return {
@@ -95,7 +113,7 @@ export function buildTodaySummary(args: {
 }
 
 export function buildSessionHistoryItems(args: {
-  sessions: PomodoroSession[];
+  sessions: SessionRecord[];
   scheduleEntries: WeeklyScheduleEntry[];
   limit?: number;
 }): SessionHistoryItem[] {
@@ -110,8 +128,8 @@ export function buildSessionHistoryItems(args: {
       id: session.id,
       dateKey: getSessionDateKey(session),
       subject: resolveSessionSubject(session, scheduleById),
-      status: session.status,
-      durationSec: session.durationSec,
+      status: toSessionHistoryStatus(session),
+      durationSec: sessionDurationSec(session),
       startedAt: session.startedAt,
       endedAt: session.endedAt,
     }));

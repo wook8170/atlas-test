@@ -4,7 +4,7 @@ import {
   buildTodaySummary,
   resolveSessionSubject,
 } from "./sessionRecords";
-import type { PomodoroSession, WeeklyScheduleEntry } from "./types";
+import type { SessionRecord, WeeklyScheduleEntry } from "./types";
 
 const scheduleEntries: WeeklyScheduleEntry[] = [
   {
@@ -12,8 +12,9 @@ const scheduleEntries: WeeklyScheduleEntry[] = [
     weekday: 1,
     startMinute: 540,
     endMinute: 590,
-    subject: "수학",
-    color: "#ffd166",
+    subjectName: "수학",
+    subjectColor: "#ffd166",
+    isActive: true,
     schemaVersion: 1,
   },
   {
@@ -21,44 +22,35 @@ const scheduleEntries: WeeklyScheduleEntry[] = [
     weekday: 1,
     startMinute: 600,
     endMinute: 650,
-    subject: "과학",
-    color: "#8ecae6",
+    subjectName: "과학",
+    subjectColor: "#8ecae6",
+    isActive: true,
     schemaVersion: 1,
   },
 ];
 
 function createSession(
-  overrides: Partial<PomodoroSession> & Pick<PomodoroSession, "id">,
-): PomodoroSession {
+  overrides: Partial<SessionRecord> & Pick<SessionRecord, "id">,
+): SessionRecord {
   return {
     id: overrides.id,
+    scheduleEntryId: overrides.scheduleEntryId ?? null,
+    freeTaskTitle: overrides.freeTaskTitle ?? null,
+    sessionType: overrides.sessionType ?? "focus",
     startedAt: overrides.startedAt ?? "2026-05-13T09:00:00+09:00",
     endedAt: overrides.endedAt ?? "2026-05-13T09:25:00+09:00",
-    durationSec: overrides.durationSec ?? 1500,
-    status: overrides.status ?? "completed",
-    scheduleEntryId: overrides.scheduleEntryId,
-    subjectSnapshot: overrides.subjectSnapshot,
-    freeTaskTitle: overrides.freeTaskTitle,
-    localDateKey: overrides.localDateKey,
-    sessionType: overrides.sessionType,
+    completed: overrides.completed ?? true,
+    localDateKey: overrides.localDateKey ?? "2026-05-13",
+    createdAt: overrides.createdAt ?? "2026-05-13T09:25:00+09:00",
+    elapsedSeconds: overrides.elapsedSeconds ?? 1500,
+    completionReason: overrides.completionReason ?? "finished",
     schemaVersion: 1,
   };
 }
 
 describe("sessionRecords", () => {
-  it("prefers subject snapshot and free task labels before schedule lookup", () => {
+  it("prefers free task labels before schedule lookup", () => {
     const scheduleById = new Map(scheduleEntries.map((entry) => [entry.id, entry]));
-
-    expect(
-      resolveSessionSubject(
-        createSession({
-          id: "snapshot",
-          scheduleEntryId: "math",
-          subjectSnapshot: "수학 복습",
-        }),
-        scheduleById,
-      ),
-    ).toBe("수학 복습");
 
     expect(
       resolveSessionSubject(
@@ -86,18 +78,17 @@ describe("sessionRecords", () => {
       dateKey: "2026-05-13",
       scheduleEntries,
       sessions: [
-        createSession({ id: "math-1", scheduleEntryId: "math", localDateKey: "2026-05-13" }),
+        createSession({ id: "math-1", scheduleEntryId: "math" }),
         createSession({
           id: "reading",
-          subjectSnapshot: "독서",
-          localDateKey: "2026-05-13",
-          durationSec: 1200,
+          freeTaskTitle: "독서",
+          elapsedSeconds: 1200,
         }),
         createSession({
           id: "interrupted",
           scheduleEntryId: "science",
-          localDateKey: "2026-05-13",
-          status: "interrupted",
+          completed: false,
+          completionReason: "user_stopped",
         }),
         createSession({
           id: "yesterday",
@@ -106,8 +97,7 @@ describe("sessionRecords", () => {
         }),
         createSession({
           id: "break",
-          localDateKey: "2026-05-13",
-          durationSec: 300,
+          elapsedSeconds: 300,
           sessionType: "short-break",
         }),
       ],
@@ -137,32 +127,29 @@ describe("sessionRecords", () => {
         createSession({
           id: "latest",
           scheduleEntryId: "science",
-          localDateKey: "2026-05-13",
           startedAt: "2026-05-13T11:00:00+09:00",
           endedAt: "2026-05-13T11:25:00+09:00",
         }),
         createSession({
-          id: "snapshot",
-          subjectSnapshot: "국어 읽기",
-          localDateKey: "2026-05-13",
+          id: "free",
+          freeTaskTitle: "국어 읽기",
           startedAt: "2026-05-13T09:00:00+09:00",
           endedAt: "2026-05-13T09:20:00+09:00",
-          durationSec: 1200,
+          elapsedSeconds: 1200,
         }),
         createSession({
           id: "break",
-          localDateKey: "2026-05-13",
           startedAt: "2026-05-13T11:30:00+09:00",
           endedAt: "2026-05-13T11:35:00+09:00",
-          durationSec: 300,
+          elapsedSeconds: 300,
           sessionType: "short-break",
         }),
       ],
     });
 
     expect(recent).toHaveLength(2);
-    expect(recent.map((item) => item.id)).toEqual(["latest", "snapshot"]);
-    expect(recent[0].subject).toBe("과학");
-    expect(recent[1].subject).toBe("국어 읽기");
+    expect(recent.map((item) => item.id)).toEqual(["latest", "free"]);
+    expect(recent[0]?.subject).toBe("과학");
+    expect(recent[1]?.subject).toBe("국어 읽기");
   });
 });

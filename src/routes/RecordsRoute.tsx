@@ -1,253 +1,329 @@
-import { useEffect, useState } from "react";
-import { getLocalDateKey, type SessionHistoryItem } from "@/domain/sessionRecords";
-import type { TodaySummary } from "@/domain/types";
+import { FormEvent, useEffect, useState } from "react";
+import {
+  createEmptyTodaySummary,
+  sessionElapsedSeconds,
+  sessionSubjectLabel,
+  sortSessionsNewestFirst,
+} from "@/domain/sessionUtils";
+import type { CompletionReason, SessionRecord, TodaySummary } from "@/domain/types";
 import { SessionRepository } from "@/repositories";
 
-const summaryDateFormatter = new Intl.DateTimeFormat("ko-KR", {
-  month: "long",
-  day: "numeric",
-  weekday: "short",
-});
+type SessionFormStatus = "completed" | "interrupted" | "cancelled";
 
-const recordDateFormatter = new Intl.DateTimeFormat("ko-KR", {
-  month: "numeric",
-  day: "numeric",
-  weekday: "short",
-});
+type SessionFormState = {
+  label: string;
+  startedAt: string;
+  endedAt: string;
+  status: SessionFormStatus;
+};
 
-const recordTimeFormatter = new Intl.DateTimeFormat("ko-KR", {
-  hour: "numeric",
-  minute: "2-digit",
-});
-
-const statusLabelMap = {
+const STATUS_LABELS: Record<SessionFormStatus, string> = {
   completed: "완료",
   interrupted: "중단",
   cancelled: "취소",
-} as const;
+};
 
-function getTodayDateKey(): string {
-  return getLocalDateKey(new Date().toISOString());
+function toCompletionReason(status: SessionFormStatus): CompletionReason {
+  if (status === "completed") {
+    return "finished";
+  }
+  return status === "interrupted" ? "user_stopped" : "abandoned";
 }
 
-function createEmptySummary(dateKey: string): TodaySummary {
+function toSessionFormStatus(session: SessionRecord): SessionFormStatus {
+  if (session.completed) {
+    return "completed";
+  }
+  return session.completionReason === "abandoned" ? "cancelled" : "interrupted";
+}
+
+function todayKey(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function toDateTimeInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  const hours = `${date.getHours()}`.padStart(2, "0");
+  const minutes = `${date.getMinutes()}`.padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function createDefaultForm(): SessionFormState {
+  const endedAt = new Date();
+  const startedAt = new Date(endedAt.getTime() - 25 * 60 * 1000);
+
   return {
-    date: dateKey,
-    completedSessions: 0,
-    totalFocusMinutes: 0,
-    totalFocusSeconds: 0,
-    bySubject: [],
+    label: "",
+    startedAt: toDateTimeInputValue(startedAt),
+    endedAt: toDateTimeInputValue(endedAt),
+    status: "completed",
   };
 }
 
-function formatStudyDuration(durationSec: number): string {
-  const totalMinutes = Math.max(0, Math.round(durationSec / 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours === 0) {
-    return `${totalMinutes}분`;
-  }
-
-  if (minutes === 0) {
-    return `${hours}시간`;
-  }
-
-  return `${hours}시간 ${minutes}분`;
+function formatDayLabel(date: string): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  }).format(new Date(`${date}T00:00`));
 }
 
-function formatSummaryDate(dateKey: string): string {
-  return summaryDateFormatter.format(new Date(`${dateKey}T12:00:00`));
-}
-
-function formatRecordDate(isoString: string): string {
-  return recordDateFormatter.format(new Date(isoString));
-}
-
-function formatRecordStatusMoment(record: SessionHistoryItem): string {
-  if (!record.endedAt) {
-    return "종료 시각 미기록";
+function formatClock(value: string | undefined): string {
+  if (!value) {
+    return "--:--";
   }
 
-  return `${statusLabelMap[record.status]} ${recordTimeFormatter.format(
-    new Date(record.endedAt),
-  )}`;
+  const [, time = ""] = value.split("T");
+  return time.slice(0, 5);
+}
+
+function formatDuration(session: SessionRecord): string {
+  return `${Math.round(sessionElapsedSeconds(session) / 60)}분`;
 }
 
 export function RecordsRoute() {
-  const [summary, setSummary] = useState<TodaySummary>(() =>
-    createEmptySummary(getTodayDateKey()),
-  );
-  const [records, setRecords] = useState<SessionHistoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [sessions, setSessions] = useState<SessionRecord[]>([]);
+  const [recentSessions, setRecentSessions] = useState<SessionRecord[]>([]);
+  const [summary, setSummary] = useState<TodaySummary>(() => createEmptyTodaySummary(todayKey()));
+  const [form, setForm] = useState<SessionFormState>(() => createDefaultForm());
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const loadData = async () => {
+    const date = todayKey();
+    const [todaySessions, todaySummary, recentRecords] = await Promise.all([
+      SessionRepository.listByDate(date),
+      SessionRepository.todaySummary(date),
+      SessionRepository.listRecent(8),
+    ]);
+
+    setSessions(sortSessionsNewestFirst(todaySessions));
+    setRecentSessions(recentRecords);
+    setSummary(todaySummary);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    let isActive = true;
+    void loadData();
+  }, []);
 
-    async function loadRecords() {
-      const todayKey = getTodayDateKey();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
 
-      if (isActive) {
-        setIsLoading(true);
-        setError(null);
-      }
-
-      try {
-        const [nextSummary, nextRecords] = await Promise.all([
-          SessionRepository.todaySummary(todayKey),
-          SessionRepository.listRecent(8),
-        ]);
-
-        if (!isActive) {
-          return;
-        }
-
-        setSummary(nextSummary);
-        setRecords(nextRecords);
-      } catch {
-        if (!isActive) {
-          return;
-        }
-
-        setSummary(createEmptySummary(todayKey));
-        setRecords([]);
-        setError("기록을 불러오지 못했어요. 잠시 후 다시 열어 주세요.");
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-        }
-      }
+    const label = form.label.trim();
+    if (!label) {
+      setError("과목 또는 자유 과제명을 입력하세요.");
+      return;
     }
 
-    const reloadOnFocus = () => {
-      void loadRecords();
-    };
+    const startedAt = new Date(form.startedAt);
+    const endedAt = new Date(form.endedAt);
 
-    const reloadOnVisible = () => {
-      if (!document.hidden) {
-        void loadRecords();
-      }
-    };
+    if (Number.isNaN(startedAt.getTime()) || Number.isNaN(endedAt.getTime())) {
+      setError("시작 시각과 종료 시각을 정확히 입력하세요.");
+      return;
+    }
 
-    void loadRecords();
-    window.addEventListener("focus", reloadOnFocus);
-    document.addEventListener("visibilitychange", reloadOnVisible);
+    if (endedAt <= startedAt) {
+      setError("종료 시각은 시작 시각보다 뒤여야 합니다.");
+      return;
+    }
 
-    return () => {
-      isActive = false;
-      window.removeEventListener("focus", reloadOnFocus);
-      document.removeEventListener("visibilitychange", reloadOnVisible);
-    };
-  }, []);
+    setSaving(true);
+
+    try {
+      await SessionRepository.append({
+        id: crypto.randomUUID(),
+        scheduleEntryId: null,
+        freeTaskTitle: label,
+        sessionType: "focus",
+        startedAt: form.startedAt,
+        endedAt: form.endedAt,
+        completed: form.status === "completed",
+        localDateKey: todayKey(startedAt),
+        createdAt: new Date().toISOString(),
+        elapsedSeconds: Math.round((endedAt.getTime() - startedAt.getTime()) / 1000),
+        completionReason: toCompletionReason(form.status),
+        schemaVersion: 1,
+      });
+      await loadData();
+      setForm(createDefaultForm());
+    } catch (submitError) {
+      console.error(submitError);
+      setError("세션 기록을 저장하지 못했습니다. 다시 시도하세요.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <section className="route route--records">
-      <div className="records-screen">
-        <header className="records-hero">
-          <p className="records-hero__eyebrow">최근 학습 기록</p>
-          <h1>오늘 집중한 만큼 차곡차곡 남겨요</h1>
-          <p>
-            완료한 세션 수와 집중 시간, 과목별 기록을 이 기기 안에 저장하고 최근
-            학습 내역까지 바로 확인할 수 있어요.
-          </p>
-        </header>
-
-        {error ? <p className="records-banner records-banner--error">{error}</p> : null}
-
-        <section className="records-panel">
-          <div className="records-panel__header">
-            <div>
-              <p className="records-panel__eyebrow">오늘 요약</p>
-              <h2>{formatSummaryDate(summary.date)}</h2>
-            </div>
-            <span className="records-panel__hint">
-              {isLoading ? "새 기록을 확인 중" : "로컬 저장소 기준"}
-            </span>
-          </div>
-
-          <div className="records-stats">
-            <article className="records-stat">
-              <p className="records-stat__label">완료한 세션</p>
-              <strong>{summary.completedSessions}개</strong>
-            </article>
-            <article className="records-stat">
-              <p className="records-stat__label">집중한 시간</p>
-              <strong>{formatStudyDuration(summary.totalFocusSeconds)}</strong>
-            </article>
-            <article className="records-stat">
-              <p className="records-stat__label">완료한 과목</p>
-              <strong>{summary.bySubject.length}개</strong>
-            </article>
-          </div>
-
-          <div className="records-subjects">
-            <div className="records-subjects__header">
-              <h3>과목별 완료 횟수</h3>
-              <span>{summary.bySubject.length > 0 ? "오늘 완료한 과목" : "빈 상태"}</span>
-            </div>
-
-            {summary.bySubject.length === 0 ? (
-              <div className="records-empty">
-                <p>아직 완료한 집중 기록이 없어요.</p>
-                <p>타이머를 끝까지 완료하면 이곳에 과목별 기록이 쌓여요.</p>
-              </div>
-            ) : (
-              <ul className="records-subjects__list">
-                {summary.bySubject.map((item) => (
-                  <li key={item.subject} className="records-subjects__item">
-                    <span>{item.subject}</span>
-                    <strong>{item.count}회</strong>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </section>
-
-        <section className="records-panel">
-          <div className="records-panel__header">
-            <div>
-              <p className="records-panel__eyebrow">최근 내역</p>
-              <h2>최근 집중 기록 8개</h2>
-            </div>
-            <span className="records-panel__hint">
-              {records.length > 0 ? `${records.length}개 표시` : "최근 기록 없음"}
-            </span>
-          </div>
-
-          {isLoading && records.length === 0 ? (
-            <p className="records-loading">최근 기록을 불러오는 중이에요.</p>
-          ) : records.length === 0 ? (
-            <div className="records-empty">
-              <p>저장된 학습 기록이 아직 없어요.</p>
-              <p>집중 세션을 완료하거나 중단하면 최근 기록이 여기에 순서대로 보여요.</p>
-            </div>
-          ) : (
-            <ul className="records-list">
-              {records.map((record) => (
-                <li key={record.id} className="records-list__item">
-                  <div className="records-list__row">
-                    <div>
-                      <strong>{record.subject}</strong>
-                      <p>{formatRecordDate(record.startedAt)}</p>
-                    </div>
-                    <span
-                      className={`records-badge records-badge--${record.status}`}
-                    >
-                      {statusLabelMap[record.status]}
-                    </span>
-                  </div>
-                  <div className="records-list__meta">
-                    <span>집중 {formatStudyDuration(record.durationSec)}</span>
-                    <span>{formatRecordStatusMoment(record)}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      <div className="section-heading">
+        <div>
+          <h1>오늘의 세션 기록</h1>
+          <p>{formatDayLabel(summary.date)}에 남긴 집중 세션과 완료 수를 확인합니다.</p>
+        </div>
       </div>
+
+      <div className="summary-grid">
+        <article className="metric-card metric-card--strong">
+          <span className="metric-card__label">오늘 완료한 집중 세션</span>
+          <strong>{loading ? "-" : `${summary.completedSessions}회`}</strong>
+        </article>
+        <article className="metric-card">
+          <span className="metric-card__label">누적 집중 시간</span>
+          <strong>{loading ? "-" : `${summary.totalFocusMinutes}분`}</strong>
+        </article>
+      </div>
+
+      <section className="stack-card">
+        <div className="section-heading">
+          <div>
+            <h2>세션 남기기</h2>
+            <p>완료된 집중 세션마다 과목 또는 자유 과제명을 기록해 오늘 진행 상황을 쌓습니다.</p>
+          </div>
+        </div>
+        <form className="session-form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span>과목 또는 자유 과제명</span>
+            <input
+              type="text"
+              placeholder="예: 수학, 영어 단어 복습"
+              value={form.label}
+              onChange={(event) => setForm((current) => ({ ...current, label: event.target.value }))}
+            />
+          </label>
+
+          <div className="field-row">
+            <label className="field">
+              <span>시작 시각</span>
+              <input
+                type="datetime-local"
+                value={form.startedAt}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, startedAt: event.target.value }))
+                }
+              />
+            </label>
+            <label className="field">
+              <span>종료 시각</span>
+              <input
+                type="datetime-local"
+                value={form.endedAt}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, endedAt: event.target.value }))
+                }
+              />
+            </label>
+          </div>
+
+          <label className="field">
+            <span>완료 여부</span>
+            <select
+              value={form.status}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  status: event.target.value as SessionFormStatus,
+                }))
+              }
+            >
+              {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {error ? <p className="form-error">{error}</p> : null}
+
+          <button className="primary-button" disabled={saving} type="submit">
+            {saving ? "저장 중..." : "세션 기록 저장"}
+          </button>
+        </form>
+      </section>
+
+      <section className="stack-card">
+        <div className="section-heading">
+          <div>
+            <h2>오늘 기록</h2>
+            <p>완료 여부와 함께 시작/종료 시각을 남겨 오늘의 집중 흐름을 확인합니다.</p>
+          </div>
+        </div>
+
+        {summary.bySubject.length > 0 ? (
+          <div className="tag-row">
+            {summary.bySubject.map((item) => (
+              <span className="tag-chip" key={item.subject}>
+                {item.subject} {item.count}회
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {sessions.length > 0 ? (
+          <ul className="session-list">
+            {sessions.map((session) => (
+              <li className="session-list__item" key={session.id}>
+                <div>
+                  <strong>{sessionSubjectLabel(session)}</strong>
+                  <p>
+                    {formatClock(session.startedAt)} - {formatClock(session.endedAt)} ·{" "}
+                    {formatDuration(session)}
+                  </p>
+                </div>
+                <span className={`status-pill status-pill--${toSessionFormStatus(session)}`}>
+                  {STATUS_LABELS[toSessionFormStatus(session)]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-state">
+            아직 오늘 기록이 없습니다. 첫 세션을 저장하면 완료 수와 목록이 바로 갱신됩니다.
+          </p>
+        )}
+      </section>
+
+      <section className="stack-card">
+        <div className="section-heading">
+          <div>
+            <h2>최근 기록</h2>
+            <p>기기에 저장된 집중 세션을 최신 순서로 확인합니다.</p>
+          </div>
+        </div>
+
+        {recentSessions.length > 0 ? (
+          <ul className="session-list">
+            {recentSessions.map((session) => (
+              <li className="session-list__item" key={session.id}>
+                <div>
+                  <strong>{sessionSubjectLabel(session)}</strong>
+                  <p>
+                    {formatDayLabel(session.localDateKey)} · {formatClock(session.startedAt)} -{" "}
+                    {formatClock(session.endedAt)} · {formatDuration(session)}
+                  </p>
+                </div>
+                <span className={`status-pill status-pill--${toSessionFormStatus(session)}`}>
+                  {STATUS_LABELS[toSessionFormStatus(session)]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-state">
+            아직 저장된 세션 기록이 없습니다. 세션을 저장하면 최근 기록이 쌓입니다.
+          </p>
+        )}
+      </section>
     </section>
   );
 }
