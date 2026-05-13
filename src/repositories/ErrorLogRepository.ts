@@ -8,4 +8,10 @@ export const ErrorLogRepository = {
   async recent(limit = 20): Promise<ErrorLog[]> {
     return db.errorLogs.orderBy("occurredAt").reverse().limit(limit).toArray();
   },
+  async updateRetryResult(
+    id: string,
+    retryResult: ErrorLog["retryResult"],
+  ): Promise<void> {
+    await db.errorLogs.update(id, { retryResult });
+  },
 };

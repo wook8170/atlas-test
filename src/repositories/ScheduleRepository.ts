@@ -2,6 +2,9 @@ import { db } from "@/db/dexie";
 import type { WeeklyScheduleEntry } from "@/domain/types";
 
 export const ScheduleRepository = {
+  async get(id: string): Promise<WeeklyScheduleEntry | undefined> {
+    return db.schedule.get(id);
+  },
   async listByWeekday(weekday: number): Promise<WeeklyScheduleEntry[]> {
     return db.schedule.where("weekday").equals(weekday).sortBy("startMinute");
   },

@@ -11,13 +11,29 @@ const TABS = [
 export function MobileAppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const current = TABS.find((t) => pathname.startsWith(t.to))?.label ?? "초딩 뽀모도로";
+  const todayLabel = new Date().toLocaleDateString("ko-KR", {
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
   return (
     <div className="app-shell">
-      <header className="app-shell__header">{current}</header>
+      <header className="app-shell__header">
+        <div>
+          <p className="app-shell__eyebrow">{todayLabel}</p>
+          <strong>{current}</strong>
+        </div>
+      </header>
       <main className="app-shell__main">{children}</main>
       <nav className="app-shell__tabs">
         {TABS.map((t) => (
-          <NavLink key={t.to} to={t.to} className="app-shell__tab">
+          <NavLink
+            key={t.to}
+            to={t.to}
+            className={({ isActive }) =>
+              `app-shell__tab${isActive ? " app-shell__tab--active" : ""}`
+            }
+          >
             {t.label}
           </NavLink>
         ))}
