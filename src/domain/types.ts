@@ -18,11 +18,13 @@ export interface StudentProfile {
 export interface WeeklyScheduleEntry {
   id: string;
   weekday: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  periodLabel: string;
+  displayOrder: number;
   startMinute: number;
   endMinute: number;
   subject: string;
-  color: string;
-  schemaVersion: 1;
+  colorId: string;
+  schemaVersion: 2;
 }
 
 export interface PomodoroSettings {
