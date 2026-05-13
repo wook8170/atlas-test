@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import {
   createEmptyTodaySummary,
@@ -7,8 +8,14 @@ import {
   sessionSubjectLabel,
   sortSessionsNewestFirst,
 } from "@/domain/sessionUtils";
-import type { PomodoroSettings, SessionRecord, TodaySummary } from "@/domain/types";
+import type {
+  PomodoroSettings,
+  SessionRecord,
+  TodaySummary,
+  WeeklyScheduleEntry,
+} from "@/domain/types";
 import { DEFAULT_SETTINGS, LocalStateRepository } from "@/repositories/LocalStateRepository";
+import { ScheduleRepository } from "@/repositories/ScheduleRepository";
 import { SessionRepository } from "@/repositories/SessionRepository";
 import {
   advanceTimerPhase,
@@ -18,6 +25,13 @@ import {
   type TimerSignal,
   type TimerSnapshot,
 } from "./homeTimerModel";
+import {
+  describeEntryTiming,
+  findClosestEntry,
+  formatScheduleWindow,
+  isEntryInProgress,
+  minutesSinceMidnight,
+} from "./homeRouteUtils";
 
 type TimerStatus = "idle" | "running" | "paused";
 
@@ -61,6 +75,9 @@ export function HomeRoute() {
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [taskTitle, setTaskTitle] = useState("");
   const [activeTaskTitle, setActiveTaskTitle] = useState("자유 공부");
+  const [now, setNow] = useState(() => new Date());
+  const [scheduleEntries, setScheduleEntries] = useState<WeeklyScheduleEntry[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(true);
 
   const timerRef = useRef(timer);
   const settingsRef = useRef(settings);
@@ -98,6 +115,35 @@ export function HomeRoute() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNow(new Date());
+    }, 30_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setScheduleLoading(true);
+
+    void ScheduleRepository.listByWeekday(now.getDay())
+      .then((entries) => {
+        if (!active) return;
+        setScheduleEntries(entries);
+        setScheduleLoading(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setScheduleEntries([]);
+        setScheduleLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [now]);
 
   useEffect(() => {
     let active = true;
@@ -189,6 +235,8 @@ export function HomeRoute() {
   }, []);
 
   const paused = timer.status === "paused";
+  const currentMinute = minutesSinceMidnight(now);
+  const closestEntry = findClosestEntry(scheduleEntries, currentMinute);
 
   async function primeAudio() {
     const AudioCtor = window.AudioContext ?? window.webkitAudioContext;
@@ -207,9 +255,11 @@ export function HomeRoute() {
     }
   }
 
-  function startTimer() {
+  function startTimer(nextTaskTitle?: string) {
     void primeAudio();
-    setActiveTaskTitle(taskTitle.trim() || "자유 공부");
+    const title = nextTaskTitle?.trim() || taskTitle.trim() || "자유 공부";
+    setActiveTaskTitle(title);
+    setTaskTitle(title === "자유 공부" ? "" : title);
     setSignal(null);
     setTimer({ ...createInitialTimer(settingsRef.current), status: "running" });
   }
@@ -294,7 +344,11 @@ export function HomeRoute() {
           />
         </label>
         {timer.status === "idle" ? (
-          <button type="button" className="home-timer__button home-timer__button--primary" onClick={startTimer}>
+          <button
+            type="button"
+            className="home-timer__button home-timer__button--primary"
+            onClick={() => startTimer()}
+          >
             집중 시작
           </button>
         ) : null}
@@ -314,6 +368,71 @@ export function HomeRoute() {
           </button>
         ) : null}
       </div>
+
+      <section className="stack-card">
+        <div className="section-heading">
+          <div>
+            <h2>지금 가까운 시간표</h2>
+            <p>
+              현재 시각을 기준으로 가장 가까운 블록을 강조하고 바로 집중을 시작합니다.
+            </p>
+          </div>
+          <Link className="cta-link" to="/timetable">
+            시간표 열기
+          </Link>
+        </div>
+        {scheduleLoading ? (
+          <p className="empty-state">오늘 시간표를 불러오는 중입니다.</p>
+        ) : scheduleEntries.length === 0 ? (
+          <p className="empty-state">
+            오늘 등록된 시간표가 없습니다. 시간표 탭에서 과목을 추가해 보세요.
+          </p>
+        ) : (
+          <div className="home-schedule-list">
+            {scheduleEntries.map((entry) => {
+              const isClosest = closestEntry?.id === entry.id;
+              const isCurrent = isEntryInProgress(entry, currentMinute);
+              return (
+                <article
+                  className={[
+                    "home-schedule-card",
+                    isClosest ? "home-schedule-card--closest" : "",
+                    isCurrent ? "home-schedule-card--current" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  key={entry.id}
+                  style={{ "--schedule-color": entry.subjectColor } as CSSProperties}
+                >
+                  <div className="home-schedule-card__main">
+                    <span>{formatScheduleWindow(entry)}</span>
+                    <strong>{entry.subjectName}</strong>
+                    <p>{describeEntryTiming(entry, currentMinute)}</p>
+                  </div>
+                  <div className="home-schedule-card__actions">
+                    {isClosest ? (
+                      <span className="home-schedule-badge">가장 가까움</span>
+                    ) : null}
+                    {isCurrent ? (
+                      <span className="home-schedule-badge home-schedule-badge--solid">
+                        지금
+                      </span>
+                    ) : null}
+                    <button
+                      className="home-timer__button home-timer__button--ghost"
+                      disabled={timer.status !== "idle"}
+                      onClick={() => startTimer(entry.subjectName)}
+                      type="button"
+                    >
+                      이 과목으로 시작
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <section className="stack-card">
         <div className="section-heading">
