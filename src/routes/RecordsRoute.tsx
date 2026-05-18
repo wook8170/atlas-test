@@ -1,4 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
+import { DataGrid } from "@/components/DataGrid";
+import type { DataGridColumn } from "@/components/DataGrid";
 import {
   createEmptyTodaySummary,
   sessionElapsedSeconds,
@@ -85,6 +87,42 @@ function formatClock(value: string | undefined): string {
 function formatDuration(session: SessionRecord): string {
   return `${Math.round(sessionElapsedSeconds(session) / 60)}분`;
 }
+
+const RECENT_SESSION_COLUMNS: DataGridColumn<SessionRecord>[] = [
+  {
+    id: "subject",
+    title: "과목",
+    render: (session) => <strong>{sessionSubjectLabel(session)}</strong>,
+    sortValue: (session) => sessionSubjectLabel(session),
+  },
+  {
+    id: "date",
+    title: "날짜",
+    render: (session) => formatDayLabel(session.localDateKey),
+    sortValue: (session) => session.localDateKey,
+  },
+  {
+    id: "time",
+    title: "시간",
+    render: (session) => `${formatClock(session.startedAt)} - ${formatClock(session.endedAt)}`,
+  },
+  {
+    id: "duration",
+    title: "길이",
+    align: "right",
+    render: (session) => formatDuration(session),
+    sortValue: (session) => sessionElapsedSeconds(session),
+  },
+  {
+    id: "status",
+    title: "상태",
+    align: "center",
+    render: (session) => {
+      const status = toSessionFormStatus(session);
+      return <span className={`status-pill status-pill--${status}`}>{STATUS_LABELS[status]}</span>;
+    },
+  },
+];
 
 export function RecordsRoute() {
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
@@ -301,28 +339,13 @@ export function RecordsRoute() {
           </div>
         </div>
 
-        {recentSessions.length > 0 ? (
-          <ul className="session-list">
-            {recentSessions.map((session) => (
-              <li className="session-list__item" key={session.id}>
-                <div>
-                  <strong>{sessionSubjectLabel(session)}</strong>
-                  <p>
-                    {formatDayLabel(session.localDateKey)} · {formatClock(session.startedAt)} -{" "}
-                    {formatClock(session.endedAt)} · {formatDuration(session)}
-                  </p>
-                </div>
-                <span className={`status-pill status-pill--${toSessionFormStatus(session)}`}>
-                  {STATUS_LABELS[toSessionFormStatus(session)]}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="empty-state">
-            아직 저장된 세션 기록이 없습니다. 세션을 저장하면 최근 기록이 쌓입니다.
-          </p>
-        )}
+        <DataGrid
+          columns={RECENT_SESSION_COLUMNS}
+          rows={recentSessions}
+          getRowKey={(session) => session.id}
+          caption="헤더를 눌러 과목·날짜·길이 순으로 정렬할 수 있습니다."
+          emptyMessage="아직 저장된 세션 기록이 없습니다. 세션을 저장하면 최근 기록이 쌓입니다."
+        />
       </section>
     </section>
   );
