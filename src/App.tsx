@@ -1,4 +1,14 @@
-import { HashRouter, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import {
+  HashRouter,
+  Link,
+  Navigate,
+  NavLink,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
+import { LandingPage } from "./pages/LandingPage";
 import { SetupPage } from "./pages/SetupPage";
 import { ValuePage } from "./pages/ValuePage";
 import { PurposePage } from "./pages/PurposePage";
@@ -25,68 +35,16 @@ function RequireProfile({ children }: { children: JSX.Element }) {
   return children;
 }
 
-function Shell() {
-  const { profile } = useProfile();
+function AppLayout() {
   return (
     <div className="shell">
       <header className="app-header">
-        <h1>이사갈집</h1>
+        <Link to="/" className="logo">
+          <span className="logo-dot" />
+          이사갈집
+        </Link>
         <p className="subtitle">내 집 시세로 찾는 다음 집</p>
       </header>
-      <main>
-        <Routes>
-          <Route path="/setup" element={<SetupPage />} />
-          <Route
-            path="/value"
-            element={
-              <RequireProfile>
-                <ValuePage />
-              </RequireProfile>
-            }
-          />
-          <Route
-            path="/purpose"
-            element={
-              <RequireProfile>
-                <PurposePage />
-              </RequireProfile>
-            }
-          />
-          <Route
-            path="/budget"
-            element={
-              <RequireProfile>
-                <BudgetPage />
-              </RequireProfile>
-            }
-          />
-          <Route
-            path="/explore"
-            element={
-              <RequireProfile>
-                <ExplorePage />
-              </RequireProfile>
-            }
-          />
-          <Route
-            path="/favorites"
-            element={
-              <RequireProfile>
-                <FavoritesPage />
-              </RequireProfile>
-            }
-          />
-          <Route
-            path="/listing/:id"
-            element={
-              <RequireProfile>
-                <ListingDetailPage />
-              </RequireProfile>
-            }
-          />
-          <Route path="*" element={<Navigate to={profile ? "/value" : "/setup"} replace />} />
-        </Routes>
-      </main>
       <nav className="tab-bar">
         {TABS.map((t) => (
           <NavLink key={t.to} to={t.to} className={({ isActive }) => (isActive ? "active" : "")}>
@@ -94,7 +52,71 @@ function Shell() {
           </NavLink>
         ))}
       </nav>
+      <main>
+        <Outlet />
+      </main>
     </div>
+  );
+}
+
+function AppRoutes() {
+  const { profile } = useProfile();
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route element={<AppLayout />}>
+        <Route path="/setup" element={<SetupPage />} />
+        <Route
+          path="/value"
+          element={
+            <RequireProfile>
+              <ValuePage />
+            </RequireProfile>
+          }
+        />
+        <Route
+          path="/purpose"
+          element={
+            <RequireProfile>
+              <PurposePage />
+            </RequireProfile>
+          }
+        />
+        <Route
+          path="/budget"
+          element={
+            <RequireProfile>
+              <BudgetPage />
+            </RequireProfile>
+          }
+        />
+        <Route
+          path="/explore"
+          element={
+            <RequireProfile>
+              <ExplorePage />
+            </RequireProfile>
+          }
+        />
+        <Route
+          path="/favorites"
+          element={
+            <RequireProfile>
+              <FavoritesPage />
+            </RequireProfile>
+          }
+        />
+        <Route
+          path="/listing/:id"
+          element={
+            <RequireProfile>
+              <ListingDetailPage />
+            </RequireProfile>
+          }
+        />
+        <Route path="*" element={<Navigate to={profile ? "/value" : "/setup"} replace />} />
+      </Route>
+    </Routes>
   );
 }
 
@@ -103,7 +125,7 @@ export default function App() {
     <ProfileProvider>
       <FavoritesProvider>
         <HashRouter>
-          <Shell />
+          <AppRoutes />
         </HashRouter>
       </FavoritesProvider>
     </ProfileProvider>

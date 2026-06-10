@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { MapView } from "../components/MapView";
 import { providers } from "../data";
-import { formatArea, formatMoney } from "../domain/format";
+import { formatArea, formatMoney, formatMoneyShort } from "../domain/format";
 import { commuteMinutes, distanceKm } from "../domain/geo";
 import { loanForPrice } from "../domain/loan";
 import type { FinanceInput } from "../domain/loan";
@@ -65,11 +65,16 @@ export function ListingDetailPage() {
       : formatMoney(listing.price);
 
   const markers = [
-    { location: listing.location, label: listing.name, color: "#2563eb" },
+    {
+      location: listing.location,
+      pill: listing.dealType === "monthly" ? `월 ${listing.monthlyRent}만` : formatMoneyShort(listing.price),
+      detail: listing.name,
+      variant: "listing" as const,
+    },
     ...(profile
       ? [
-          { location: profile.homeLocation, label: "내 집", color: "#059669" },
-          { location: profile.workLocation, label: "직장", color: "#d97706" },
+          { location: profile.homeLocation, pill: "내 집", variant: "home" as const },
+          { location: profile.workLocation, pill: "직장", variant: "work" as const },
         ]
       : []),
   ];

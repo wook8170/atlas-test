@@ -11,6 +11,15 @@ export function formatMoney(manwon: number): string {
   return `${v.toLocaleString()}만원`;
 }
 
+/** 지도 마커 등 좁은 공간용 축약 표기: 6.5억 / 4,500만 */
+export function formatMoneyShort(manwon: number): string {
+  if (manwon >= 10000) {
+    const eok = manwon / 10000;
+    return `${Number.isInteger(eok) ? eok : eok.toFixed(1)}억`;
+  }
+  return `${Math.round(manwon).toLocaleString()}만`;
+}
+
 export function formatArea(areaM2: number): string {
   return `${areaM2.toFixed(0)}m² (${toPyeong(areaM2).toFixed(1)}평)`;
 }
