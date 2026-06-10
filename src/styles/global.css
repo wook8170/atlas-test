@@ -1,0 +1,278 @@
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --text: #1c2230;
+  --muted: #6b7280;
+  --primary: #2563eb;
+  --primary-soft: #dbeafe;
+  --border: #e5e7eb;
+  --sale: #2563eb;
+  --jeonse: #059669;
+  --monthly: #d97706;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.shell {
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 64px;
+}
+
+.app-header {
+  padding: 20px 16px 8px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+main {
+  flex: 1;
+  padding: 8px 16px 24px;
+}
+
+h2 {
+  font-size: 17px;
+  margin: 20px 0 8px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 4px 0 12px;
+  line-height: 1.5;
+}
+
+.hint a {
+  color: var(--primary);
+}
+
+/* 폼 */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.form-row {
+  display: flex;
+  gap: 8px;
+}
+
+input,
+select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  background: var(--card);
+  color: var(--text);
+  width: 100%;
+}
+
+button.primary {
+  margin-top: 8px;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.primary:disabled {
+  opacity: 0.6;
+}
+
+/* 칩 */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.chip.small {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* 카드 */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.card-head h3 {
+  margin: 0;
+  font-size: 15px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.badge-sale {
+  background: var(--sale);
+}
+
+.badge-jeonse {
+  background: var(--jeonse);
+}
+
+.badge-monthly {
+  background: var(--monthly);
+}
+
+.badge-type {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.price {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 6px 0 2px;
+}
+
+.big-price {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 6px 0;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 12.5px;
+  margin: 2px 0;
+  line-height: 1.5;
+}
+
+.tags {
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  font-size: 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 6px;
+  color: var(--muted);
+}
+
+.reasons {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.estimate-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+/* 하단 탭바 */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab-bar a {
+  flex: 1;
+  text-align: center;
+  padding: 12px 4px;
+  font-size: 12.5px;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tab-bar a.active {
+  color: var(--primary);
+}
