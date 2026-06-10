@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { commuteMinutes } from "../domain/geo";
 import { formatArea, formatMoney } from "../domain/format";
 import type { GeoPoint, Listing } from "../domain/types";
@@ -21,7 +22,11 @@ export function ListingCard({ listing: l, workLocation, footer }: Props) {
       <div className="card-head">
         <span className={`badge badge-${l.dealType}`}>{DEAL_TYPE_LABEL[l.dealType]}</span>
         <span className="badge badge-type">{PROPERTY_TYPE_LABEL[l.propertyType]}</span>
-        <h3>{l.name}</h3>
+        <h3>
+          <Link to={`/listing/${l.id}`} className="card-link">
+            {l.name} ›
+          </Link>
+        </h3>
       </div>
       <p className="price">{priceLabel}</p>
       <p className="meta">

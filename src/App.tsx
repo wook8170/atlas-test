@@ -4,6 +4,7 @@ import { ValuePage } from "./pages/ValuePage";
 import { PurposePage } from "./pages/PurposePage";
 import { BudgetPage } from "./pages/BudgetPage";
 import { ExplorePage } from "./pages/ExplorePage";
+import { ListingDetailPage } from "./pages/ListingDetailPage";
 import { ProfileProvider, useProfile } from "./state/ProfileContext";
 
 const TABS = [
@@ -61,6 +62,14 @@ function Shell() {
             element={
               <RequireProfile>
                 <ExplorePage />
+              </RequireProfile>
+            }
+          />
+          <Route
+            path="/listing/:id"
+            element={
+              <RequireProfile>
+                <ListingDetailPage />
               </RequireProfile>
             }
           />
