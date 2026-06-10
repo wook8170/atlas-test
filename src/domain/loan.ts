@@ -122,6 +122,27 @@ export function calcJeonseBudget(input: FinanceInput, product: LoanProduct): Bud
   };
 }
 
+/** 월 주거비(월세)는 월소득의 30% 이내 권장 */
+export const RENT_INCOME_RATIO = 0.3;
+
+export interface MonthlyBudgetResult {
+  equity: number;
+  /** 보증금 가능액 (자기자본 내) */
+  maxDeposit: number;
+  /** 감당 가능한 월세 상한 */
+  maxRent: number;
+}
+
+/** 월세: 보증금은 자기자본 내, 월세는 월소득의 30% 이내 */
+export function calcMonthlyRentBudget(input: FinanceInput): MonthlyBudgetResult {
+  const equity = Math.max(0, input.homeSalePrice - input.existingLoan) + input.cash;
+  return {
+    equity,
+    maxDeposit: equity,
+    maxRent: Math.floor((input.annualIncome * RENT_INCOME_RATIO) / 12),
+  };
+}
+
 /** 특정 매물 가격에 대해 필요한 대출액과 월 상환액 */
 export function loanForPrice(
   price: number,

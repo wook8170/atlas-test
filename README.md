@@ -44,15 +44,25 @@ src/
 └── state/         # 사용자 프로필 (localStorage 영속)
 ```
 
-## 실제 API로 교체하기
+## 실제 API로 전환하기
 
-`src/data/index.ts`의 `providers` 객체 구현만 바꾸면 된다.
+실제 API 어댑터가 이미 구현되어 있다. `.env.example`을 `.env.local`로 복사해
+키를 채우면 자동으로 전환된다 (키가 없으면 목데이터로 동작):
 
-| 어댑터 | 목 구현 | 실제 연동 대상 |
+```bash
+cp .env.example .env.local
+# VITE_KAKAO_REST_API_KEY=...   카카오 개발자 콘솔 REST API 키
+# VITE_MOLIT_API_KEY=...        공공데이터포털 국토부 실거래가 서비스 키
+```
+
+| 어댑터 | 목 구현 | 실제 구현 |
 |---|---|---|
-| `GeocodeProvider` | 동 이름 매칭 | 카카오/네이버 주소 검색 API |
-| `ListingProvider` | 결정적 생성 매물 | 국토교통부 실거래가 공개 API |
-| `PriceProvider` | 인근 평당가 평균 | 실거래가 기반 시세 |
-| `LoanProvider` | 대표 상품 7종 | 은행 대출 상품 비교 API |
+| `GeocodeProvider` | 동 이름 매칭 | `KakaoGeocodeProvider` (카카오 주소 검색) |
+| `ListingProvider` | 결정적 생성 매물 | `MolitListingProvider` (국토부 아파트 실거래가, 매매+전월세) |
+| `PriceProvider` | — | `ListingBasedPriceProvider` (매물 소스 공용) |
+| `LoanProvider` | 대표 상품 7종 | 미구현 (금융감독원 금융상품 비교공시 API 후보) |
+
+국토부 어댑터는 현재 아파트만 지원하며, 오피스텔·연립다세대 API도 같은
+패턴(`src/data/real/molitListings.ts`)으로 확장하면 된다.
 
 대출 계산은 DSR 40%, LTV(상품별), 전세대출 80% 규칙을 단순화해 반영한 참고용 추정치다.

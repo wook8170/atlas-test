@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { ListingBasedPriceProvider } from "../listingPrice";
 import { MockGeocodeProvider } from "./geocode";
 import { allListings, MockListingProvider } from "./listings";
 import { MockLoanProvider } from "./loans";
-import { MockPriceProvider } from "./price";
 
 describe("목데이터 파이프라인", () => {
   it("매물이 충분히 생성되고 결정적이다", () => {
@@ -40,7 +40,7 @@ describe("목데이터 파이프라인", () => {
   });
 
   it("시세 추정: 강남 아파트가 노원 아파트보다 비싸다", async () => {
-    const price = new MockPriceProvider();
+    const price = new ListingBasedPriceProvider(new MockListingProvider());
     const gangnam = await price.estimate({ lat: 37.5006, lng: 127.0364 }, "apartment", 84);
     const nowon = await price.estimate({ lat: 37.6451, lng: 127.0648 }, "apartment", 84);
     expect(gangnam.price).toBeGreaterThan(nowon.price);

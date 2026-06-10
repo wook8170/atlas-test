@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   calcJeonseBudget,
+  calcMonthlyRentBudget,
   calcSaleBudget,
   loanForPrice,
   maxPrincipalByDsr,
@@ -99,6 +100,20 @@ describe("calcJeonseBudget", () => {
     // 자기자본 1억 → ratio 결정이면 5억이지만 상품한도 3억에 걸림
     expect(r.maxBudget).toBe(r.equity + r.loanLimit);
     expect(r.loanLimit).toBeLessThanOrEqual(30000);
+  });
+});
+
+describe("calcMonthlyRentBudget", () => {
+  it("보증금은 자기자본 내, 월세는 월소득 30%", () => {
+    const r = calcMonthlyRentBudget({
+      annualIncome: 6000,
+      cash: 5000,
+      homeSalePrice: 30000,
+      existingLoan: 10000,
+    });
+    expect(r.equity).toBe(25000);
+    expect(r.maxDeposit).toBe(25000);
+    expect(r.maxRent).toBe(150); // 6000 * 0.3 / 12
   });
 });
 

@@ -1,21 +1,23 @@
-import { distanceKm, toPyeong } from "../../domain/geo";
-import type { GeoPoint, PriceEstimate, PropertyType } from "../../domain/types";
-import type { PriceProvider } from "../providers";
-import { allListings } from "./listings";
+import { distanceKm, toPyeong } from "../domain/geo";
+import type { GeoPoint, PriceEstimate, PropertyType } from "../domain/types";
+import type { ListingProvider, PriceProvider } from "./providers";
 
 /**
- * 인근 동일 유형 매매 매물의 평당가 평균으로 시세를 추정하는 목 구현.
- * 실제 구현에서는 국토부 실거래가를 사용한다.
+ * 매물 소스(목/실거래가)와 무관하게, 인근 동일 유형 매매 매물의
+ * 평당가 평균으로 시세를 추정한다.
  */
-export class MockPriceProvider implements PriceProvider {
+export class ListingBasedPriceProvider implements PriceProvider {
+  constructor(private readonly listings: ListingProvider) {}
+
   async estimate(
     location: GeoPoint,
     propertyType: PropertyType,
     areaM2: number,
   ): Promise<PriceEstimate> {
-    const sales = allListings().filter(
-      (l) => l.dealType === "sale" && l.propertyType === propertyType,
-    );
+    const sales = await this.listings.search({
+      dealTypes: ["sale"],
+      propertyTypes: [propertyType],
+    });
     const nearby = sales
       .map((l) => ({ l, d: distanceKm(l.location, location) }))
       .sort((a, b) => a.d - b.d)
