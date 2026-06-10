@@ -5,6 +5,8 @@ import { PurposePage } from "./pages/PurposePage";
 import { BudgetPage } from "./pages/BudgetPage";
 import { ExplorePage } from "./pages/ExplorePage";
 import { ListingDetailPage } from "./pages/ListingDetailPage";
+import { FavoritesPage } from "./pages/FavoritesPage";
+import { FavoritesProvider } from "./state/FavoritesContext";
 import { ProfileProvider, useProfile } from "./state/ProfileContext";
 
 const TABS = [
@@ -13,6 +15,7 @@ const TABS = [
   { to: "/purpose", label: "목적 추천" },
   { to: "/budget", label: "대출·예산" },
   { to: "/explore", label: "조합 탐색" },
+  { to: "/favorites", label: "찜·비교" },
 ];
 
 function RequireProfile({ children }: { children: JSX.Element }) {
@@ -66,6 +69,14 @@ function Shell() {
             }
           />
           <Route
+            path="/favorites"
+            element={
+              <RequireProfile>
+                <FavoritesPage />
+              </RequireProfile>
+            }
+          />
+          <Route
             path="/listing/:id"
             element={
               <RequireProfile>
@@ -90,9 +101,11 @@ function Shell() {
 export default function App() {
   return (
     <ProfileProvider>
-      <HashRouter>
-        <Shell />
-      </HashRouter>
+      <FavoritesProvider>
+        <HashRouter>
+          <Shell />
+        </HashRouter>
+      </FavoritesProvider>
     </ProfileProvider>
   );
 }

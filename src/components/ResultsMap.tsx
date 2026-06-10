@@ -1,0 +1,39 @@
+import { useMemo, useState } from "react";
+import { MapView } from "./MapView";
+import type { MapMarker } from "./MapView";
+import type { Listing, UserProfile } from "../domain/types";
+
+interface Props {
+  listings: Listing[];
+  profile: UserProfile;
+}
+
+/** 검색 결과 매물들을 지도에 표시. 접고 펼 수 있다. */
+export function ResultsMap({ listings, profile }: Props) {
+  const [open, setOpen] = useState(true);
+
+  const markers: MapMarker[] = useMemo(
+    () => [
+      ...listings.slice(0, 30).map((l) => ({
+        location: l.location,
+        label: l.name,
+        color: "#2563eb",
+        permanent: false,
+      })),
+      { location: profile.homeLocation, label: "내 집", color: "#059669" },
+      { location: profile.workLocation, label: "직장", color: "#d97706" },
+    ],
+    [listings, profile],
+  );
+
+  if (listings.length === 0) return null;
+
+  return (
+    <div>
+      <button className="back" onClick={() => setOpen((v) => !v)}>
+        {open ? "지도 접기 ▲" : "지도에서 보기 ▼"}
+      </button>
+      {open && <MapView markers={markers} height={260} />}
+    </div>
+  );
+}

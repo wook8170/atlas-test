@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ListingCard } from "../components/ListingCard";
+import { ResultsMap } from "../components/ResultsMap";
 import { providers } from "../data";
 import { formatMoney } from "../domain/format";
 import { toPyeong } from "../domain/geo";
@@ -94,6 +95,8 @@ export function ExplorePage() {
         {formatMoney(p.min)} ~ {formatMoney(p.max)} · {toPyeong(a.min).toFixed(0)}~
         {toPyeong(a.max).toFixed(0)}평 · {results.length}건
       </p>
+
+      <ResultsMap listings={results} profile={profile} />
 
       <div className="list">
         {results.map((l) => (

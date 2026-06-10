@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ListingCard } from "../components/ListingCard";
+import { ResultsMap } from "../components/ResultsMap";
 import { providers } from "../data";
 import { formatArea, formatMoney } from "../domain/format";
 import { findSimilarPrice } from "../domain/priceBands";
@@ -55,6 +56,7 @@ export function ValuePage() {
         내 집 시세 ±7% 범위의 매매 매물입니다.{" "}
         <Link to="/explore">가격·평수 조합으로 더 찾아보기 →</Link>
       </p>
+      <ResultsMap listings={similar} profile={profile} />
       <div className="list">
         {similar.map((l) => (
           <ListingCard key={l.id} listing={l} workLocation={profile.workLocation} />

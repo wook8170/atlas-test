@@ -7,6 +7,8 @@ export interface MapMarker {
   location: GeoPoint;
   label: string;
   color: string;
+  /** false면 탭/호버 시에만 라벨 표시 (기본 true) */
+  permanent?: boolean;
 }
 
 interface Props {
@@ -31,15 +33,16 @@ export function MapView({ markers, height = 240 }: Props) {
 
     const bounds = L.latLngBounds(markers.map((m) => [m.location.lat, m.location.lng]));
     for (const m of markers) {
+      const permanent = m.permanent !== false;
       L.circleMarker([m.location.lat, m.location.lng], {
-        radius: 9,
+        radius: permanent ? 9 : 7,
         color: "#fff",
         weight: 2,
         fillColor: m.color,
         fillOpacity: 1,
       })
         .addTo(map)
-        .bindTooltip(m.label, { permanent: true, direction: "top", offset: [0, -10] });
+        .bindTooltip(m.label, { permanent, direction: "top", offset: [0, -10] });
     }
     map.fitBounds(bounds.pad(0.3), { maxZoom: 14 });
 

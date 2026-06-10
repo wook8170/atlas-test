@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { commuteMinutes } from "../domain/geo";
+import { useFavorites } from "../state/FavoritesContext";
 import { formatArea, formatMoney } from "../domain/format";
 import type { GeoPoint, Listing } from "../domain/types";
 import { DEAL_TYPE_LABEL, PROPERTY_TYPE_LABEL } from "../domain/types";
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export function ListingCard({ listing: l, workLocation, footer }: Props) {
+  const { isFavorite, toggle } = useFavorites();
+  const fav = isFavorite(l.id);
   const priceLabel =
     l.dealType === "monthly"
       ? `보증금 ${formatMoney(l.price)} / 월 ${l.monthlyRent}만`
@@ -19,6 +22,14 @@ export function ListingCard({ listing: l, workLocation, footer }: Props) {
 
   return (
     <article className="card">
+      <button
+        className={`fav-btn ${fav ? "on" : ""}`}
+        onClick={() => toggle(l.id)}
+        aria-label={fav ? "찜 해제" : "찜하기"}
+        title={fav ? "찜 해제" : "찜하기"}
+      >
+        {fav ? "♥" : "♡"}
+      </button>
       <div className="card-head">
         <span className={`badge badge-${l.dealType}`}>{DEAL_TYPE_LABEL[l.dealType]}</span>
         <span className="badge badge-type">{PROPERTY_TYPE_LABEL[l.propertyType]}</span>

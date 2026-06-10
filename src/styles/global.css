@@ -281,6 +281,65 @@ button.primary:disabled {
   margin-bottom: 8px;
 }
 
+/* 찜 버튼 */
+.card {
+  position: relative;
+}
+
+.fav-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: none;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px;
+}
+
+.fav-btn.on {
+  color: #e11d48;
+}
+
+/* 비교 테이블 */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.compare {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.compare th,
+.compare td {
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.compare thead th {
+  background: var(--bg);
+  font-size: 13px;
+}
+
+.compare tbody th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.compare tr:last-child th,
+.compare tr:last-child td {
+  border-bottom: none;
+}
+
 /* 하단 탭바 */
 .tab-bar {
   position: fixed;
@@ -307,4 +366,65 @@ button.primary:disabled {
 
 .tab-bar a.active {
   color: var(--primary);
+}
+
+/* 데스크톱(웹) 레이아웃: 상단 내비게이션 + 카드 그리드 */
+@media (min-width: 900px) {
+  .shell {
+    max-width: 1080px;
+    padding-bottom: 24px;
+  }
+
+  .app-header {
+    order: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 24px 24px 12px;
+  }
+
+  .tab-bar {
+    order: 1;
+    position: static;
+    max-width: none;
+    margin: 0 24px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  main {
+    order: 2;
+    padding: 12px 24px 32px;
+  }
+
+  .tab-bar a {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+
+  .tab-bar a.active {
+    background: var(--primary-soft);
+  }
+
+  .list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .form {
+    max-width: 560px;
+  }
+
+  .map {
+    height: 320px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .list {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
