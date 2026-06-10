@@ -7,8 +7,8 @@
   --primary: #4f46e5;
   --primary-2: #7c3aed;
   --primary-soft: #eef2ff;
-  --grad: linear-gradient(135deg, #4f46e5, #7c3aed);
-  --grad-soft: linear-gradient(135deg, #eef2ff, #f5f3ff);
+  --grad: #4f46e5;
+  --grad-soft: #eef2ff;
   --sale: #4f46e5;
   --jeonse: #059669;
   --monthly: #d97706;
@@ -186,7 +186,8 @@ a {
   top: -140px;
   left: 50%;
   margin-left: -230px;
-  background: radial-gradient(circle, #7c3aed, transparent 65%);
+  background: radial-gradient(circle, #c7cdf5, transparent 65%);
+  opacity: 0.5;
   animation: drift1 18s ease-in-out infinite;
 }
 
@@ -195,7 +196,8 @@ a {
   height: 380px;
   top: 40px;
   left: 6%;
-  background: radial-gradient(circle, #4f46e5, transparent 65%);
+  background: radial-gradient(circle, #c7cdf5, transparent 65%);
+  opacity: 0.4;
   animation: drift2 22s ease-in-out infinite;
 }
 
@@ -204,8 +206,8 @@ a {
   height: 340px;
   top: 80px;
   right: 4%;
-  background: radial-gradient(circle, #ec4899, transparent 65%);
-  opacity: 0.4;
+  background: radial-gradient(circle, #c7cdf5, transparent 65%);
+  opacity: 0.35;
   animation: drift3 20s ease-in-out infinite;
 }
 
@@ -672,9 +674,7 @@ a {
 .cta-shine {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(420px 200px at 18% 0%, rgb(255 255 255 / 0.25), transparent 70%),
-    radial-gradient(420px 220px at 88% 110%, rgb(236 72 153 / 0.4), transparent 70%);
+  background: radial-gradient(420px 200px at 18% 0%, rgb(255 255 255 / 0.18), transparent 70%);
   pointer-events: none;
 }
 
