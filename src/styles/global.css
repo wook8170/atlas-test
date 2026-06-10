@@ -737,7 +737,11 @@ button.primary:disabled {
   border-bottom: none;
 }
 
-/* ───────── 지도 ───────── */
+/* ───────── 지도 (MapLibre 3D) ───────── */
+.map-wrap {
+  position: relative;
+}
+
 .map {
   border-radius: var(--radius);
   border: 1px solid var(--border);
@@ -747,14 +751,8 @@ button.primary:disabled {
   overflow: hidden;
 }
 
-.map-pin {
-  display: grid;
-  place-items: center;
-}
-
 .map-pill {
   display: inline-block;
-  transform: translate(-50%, -50%);
   padding: 5px 11px;
   border-radius: 999px;
   background: #fff;
@@ -764,12 +762,13 @@ button.primary:disabled {
   letter-spacing: -0.01em;
   white-space: nowrap;
   border: 1px solid rgb(15 23 42 / 0.06);
-  box-shadow: 0 4px 14px rgb(15 23 42 / 0.16);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.2);
+  cursor: pointer;
   transition: transform 0.12s ease;
 }
 
 .map-pill:hover {
-  transform: translate(-50%, -50%) scale(1.08);
+  transform: scale(1.08);
 }
 
 .map-pill-listing {
@@ -790,22 +789,49 @@ button.primary:disabled {
   box-shadow: 0 5px 16px rgb(15 23 42 / 0.35);
 }
 
-.map-tip {
-  background: #0f172a !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 9px !important;
-  padding: 5px 10px !important;
-  font-size: 12px !important;
+.map-3d-btn {
+  position: absolute;
+  top: 24px;
+  left: 12px;
+  z-index: 5;
+  width: 42px;
+  height: 32px;
+  border: none;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--primary);
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.18);
+  transition: transform 0.12s ease;
+}
+
+.map-3d-btn:hover {
+  transform: translateY(-1px);
+}
+
+.map-tip-popup .maplibregl-popup-content {
+  background: #0f172a;
+  color: #fff;
+  border-radius: 9px;
+  padding: 6px 11px;
+  font-size: 12px;
   font-weight: 600;
-  box-shadow: 0 6px 18px rgb(15 23 42 / 0.3) !important;
+  font-family: inherit;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.3);
 }
 
-.map-tip::before {
-  display: none;
+.map-tip-popup .maplibregl-popup-tip {
+  border-top-color: #0f172a;
+  border-bottom-color: #0f172a;
 }
 
-.leaflet-container {
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+}
+
+.maplibregl-map {
   font-family: inherit;
 }
 
