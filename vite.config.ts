@@ -2,7 +2,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // GitHub Pages 프로젝트 사이트(/atlas-test/) 대응. dev 에서는 루트.
+  base: command === "build" ? "/atlas-test/" : "/",
   plugins: [react()],
   server: {
     host: true,
@@ -16,4 +18,4 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts"],
   },
-});
+}));
