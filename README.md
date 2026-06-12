@@ -24,14 +24,36 @@
 - Vitest (도메인 로직 + 목데이터 테스트)
 - 모바일/데스크톱 반응형 UI
 
-## 실행
+## 로컬에서 실행하기
+
+**준비물:** [Node.js](https://nodejs.org) 18 이상 (`node -v`로 확인)
+
+### 가장 간단한 방법 (한 줄)
+
+- macOS / Linux: `./start.sh`
+- Windows: `start.bat` 더블클릭
+
+→ Node 확인 + 의존성 설치 + 서버 시작까지 자동으로 처리합니다.
+
+### 직접 실행
 
 ```bash
-npm install
-npm run dev      # 개발 서버
-npm test         # 테스트
-npm run build    # 프로덕션 빌드
+npm install        # 최초 1회 (의존성 설치)
+npm run dev        # 개발 서버 → http://localhost:7000
 ```
+
+브라우저에서 **http://localhost:7000** 으로 접속하세요. (종료: `Ctrl + C`)
+
+### 기타 명령
+
+```bash
+npm test           # 테스트 실행
+npm run build      # 프로덕션 빌드 (dist/)
+npm run preview    # 빌드본 미리보기 → http://localhost:7000
+```
+
+> API 키 없이도 데모 목데이터로 전체 기능이 동작합니다.
+> 실거래가 연동은 아래 "실제 API로 전환하기" 참고.
 
 ## 구조
 
